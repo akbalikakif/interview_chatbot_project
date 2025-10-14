@@ -1,2 +1,2 @@
-# interview_chatbot_project
+# interview-chatbot-project
 .
