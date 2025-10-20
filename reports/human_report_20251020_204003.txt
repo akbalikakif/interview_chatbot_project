@@ -1,0 +1,93 @@
+
+=== MÜLAKAT DEĞERLENDİRME RAPORU ===
+
+Aday: Aday
+Tarih: 2025-10-20 20:40:03
+Toplam Soru: 8
+
+=== GENEL PERFORMANS ===
+Ortalama Puan: 2.4/10
+Toplam Puan: 19
+En Yüksek: 6/10
+En Düşük: 1/10
+
+=== FAZ BAZINDA PERFORMANS ===
+KIŞISEL: 2.0/10
+TEKNIK: 3.2/10
+SENARYO: 1.0/10
+
+=== ÖNERİLER ===
+1. Performans düşük. Temel becerilerin geliştirilmesi gerekiyor.
+2. Kapsamlı eğitim programı ve yakın mentorluk önerilir.
+3. Kişisel iletişim becerilerini geliştirmek için sunum ve toplantı pratikleri önerilir.
+4. Teknik bilgi eksikliği var. İlgili teknolojilerde derinlemesine çalışma önerilir.
+5. Problem çözme becerilerini geliştirmek için case study çalışmaları önerilir.
+
+=== DETAYLI SORU ANALİZİ ===
+
+Soru 1 (kişisel):
+Soru: Kariyerinde seni zorlayan en büyük teknik sorun neydi ve bu sorunu nasıl aştın?
+Cevap: Soruyu çözememek soruyu çözdüm ve mükemmel bir insan oldum.
+Puan: 1/10
+Zorluk: Bilinmeyen
+Geri Bildirim: Cevap anlamsız ve bir problem çözme sürecini açıklamıyor. 'Araştırma', 'deneme', 'çözüm-adımı' gibi beklenen anahtar kelimeleri veya kavramları içermiyor. 'Mükemmel bir insan oldum' ifadesi profesyonel bir mülakat için uygun değildir ve sorulan soruyla ilgisizdir. Ses analizi skorları yüksek olsa da, içeriğin kalitesi çok düşüktür.
+---
+
+Soru 2 (kişisel):
+Soru: Bir iş arkadaşın veya yöneticinle bir teknik konuda fikir ayrılığı yaşadığında yaklaşımın ne olur?
+Cevap: Doğru olduğunu bildiğini söylerim ve birlikte benim Fikrimin uygularız.
+Puan: 3/10
+Zorluk: Bilinmeyen
+Geri Bildirim: Cevap kendinden emin bir duruş sergiliyor ancak takım çalışması ve profesyonel iletişim becerileri açısından önemli eksiklikler içeriyor.
+
+*   **Eksik Noktalar:** Cevap, 'argüman', 'kanıt' veya 'veri' gibi unsurlara dayanarak karşı tarafı ikna etme sürecini atlıyor. Sadece 'doğru olduğunu bildiğini' söylemek, işbirliğine kapalı ve dayatmacı bir izlenim bırakıyor. 'Birlikte benim fikrimi uygularız' ifadesi, işbirliğinden çok, kendi fikrini kabul ettirme amacı taşıdığını gösteriyor.
+*   **İyileştirme Önerisi:** Daha 'çözüm-odaklı' bir yaklaşım, öncelikle karşı tarafın bakış açısını anlamaya çalıştığınızı, ardından kendi fikrinizi verilerle ve kanıtlarla destekleyerek sunduğunuzu belirtmek olurdu. Amaç, 'benim fikrimi uygulamak' yerine, 'en doğru çözümü birlikte bulmak' olmalıdır. Bu yaklaşım, işbirliğine daha yatkın olduğunuzu gösterir.
+---
+
+Soru 3 (teknik):
+Soru: Gömülü Sistemlerin çalıştığı ortamlar genellikle neden kısıtlı kaynaklara sahiptir?
+Cevap: Çünkü bilgisayarlar zaten kısıtlı kaynaklara sahip olduğu için gömülü sistemler bilgisayarın kısıtlı...
+Puan: 4/10
+Zorluk: Bilinmeyen
+Geri Bildirim: Cevabın temel fikri doğru ve ses analizine göre sunumunuz oldukça akıcı. Ancak cevap, 'neden' sorusunu açıklamak yerine durumu tespit ediyor ve döngüsel bir mantık içeriyor. Gömülü sistemlerin kaynaklarının kısıtlı olmasının arkasındaki **maliyet**, **güç tüketimi** ve **fiziksel kısıtlamalar** gibi temel sebeplere değinmek cevabınızı çok daha güçlü kılardı.
+---
+
+Soru 4 (teknik):
+Soru: Veri Analitiği'nin temel hedefi nedir?
+Cevap: lerden anlamlı bilgiler çıkarmak ve bunu içgörüler de kullanarak Geleceğe dair belli tahminlerde bul...
+Puan: 6/10
+Zorluk: Bilinmeyen
+Geri Bildirim: Cevabın temel fikri doğru ve 'içgörü' anahtar kelimesini kullanmanız olumlu. Ses analizi sonuçlarınız, özellikle akıcılığınız, konuya hakim ve kendinize güvenli bir duruş sergilediğinizi gösteriyor. Ancak, cevap oldukça kısa ve cümlenin başı ('Verilerden' gibi) eksik olduğu için tamamlanmamış hissi veriyor. Cevabınızı 'ham veri'den bahsederek başlatmak ve bu sürecin nihai amacının 'karar mekanizmalarını desteklemek' olduğunu eklemek, ifadenizi çok daha güçlü ve kapsamlı hale getirecektir.
+---
+
+Soru 5 (teknik):
+Soru: DevOps yaklaşımının temel faydası nedir?
+Cevap: Çözümler sunma mızı sağlar ve böylece daha rahat bir şekilde çözüm üretebiliriz.
+Puan: 2/10
+Zorluk: Bilinmeyen
+Geri Bildirim: Ses analizi sonuçlarınız (akıcılık, konuşma hızı) çok olumlu olsa da, cevabın içeriği son derece zayıf. Cümle, 'çözüm' kelimesini tekrar ederek anlamsal olarak bir değer katmıyor ve fazlasıyla genel kalıyor. Herhangi bir somut örnek, detay veya istenen anahtar kelimelerden ('teslimat-hızı', 'güvenilirlik', 'otomasyon', 'iş-birliği') hiçbiri kullanılmamış. Bu cevap, konu hakkında bilgi sahibi olduğunuzu göstermemektedir. Cevaplarınızı spesifik örneklerle ve sonuç odaklı bilgilerle desteklemelisiniz.
+---
+
+Soru 6 (teknik):
+Soru: Bir web sayfasına erişirken kullanılan HTTP durum kodlarından 200, 404 ve 500 ne anlama gelir?
+Cevap: Bulunamadı 200 işte olmadı altın Hafiz ne olduğunu bilmiyorum.
+Puan: 1/10
+Zorluk: Bilinmeyen
+Geri Bildirim: The answer is completely incoherent and nonsensical. While it mentions correct keywords like '200' and 'Bulunamadı' (404 Not Found), they are used randomly without any logical structure or explanation. The response demonstrates a severe lack of understanding of the topic. The low fluency score (44.4/100) from the voice analysis confirms the disjointed nature of the answer.
+---
+
+Soru 7 (senaryo):
+Soru: Kişiselleştirilmiş senaryo sorusu
+Cevap: Cevap algılanamadı; lütfen tekrar sorunuz.
+Puan: 1/10
+Zorluk: Bilinmeyen
+Geri Bildirim: This is not an answer to an interview question. The provided text is in Turkish and translates to 'Answer could not be perceived; please ask your question again.' It is an error message or a request for clarification, not a response to be evaluated.
+---
+
+Soru 8 (senaryo):
+Soru: Bu durumda nasıl ilerlerdin?
+Cevap: lerle mezdim
+Puan: 1/10
+Zorluk: Bilinmeyen
+Geri Bildirim: The provided answer is incomprehensible and does not contain any meaningful words or sentences. It is impossible to evaluate the content, relevance, or structure of the response. While the voice analysis metrics are high, the substance of the answer is non-existent.
+---

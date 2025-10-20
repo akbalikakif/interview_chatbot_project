@@ -1,0 +1,105 @@
+{
+  "candidate_name": "Aday",
+  "interview_date": "2025-10-20 20:33:56",
+  "total_questions": 8,
+  "scores": {
+    "average": 3.5,
+    "total": 28,
+    "max": 6,
+    "min": 1,
+    "count": 8
+  },
+  "phases": {
+    "kişisel": 3.5
+  },
+  "recommendations": [
+    "Performans düşük. Temel becerilerin geliştirilmesi gerekiyor.",
+    "Kapsamlı eğitim programı ve yakın mentorluk önerilir.",
+    "Kişisel iletişim becerilerini geliştirmek için sunum ve toplantı pratikleri önerilir."
+  ],
+  "detailed_analysis": [
+    {
+      "question_number": 1,
+      "question": "5 yıl sonra kendinizi nerede görüyorsunuz? Bu hedefe ulaşmak için ne yapıyorsunuz?",
+      "category": "kişisel",
+      "answer": "Çalışıyor ve kendime bir şeyler katıyorum.",
+      "score": 3,
+      "feedback": "Ses analizi sonuçlarınıza göre (akıcılık, konuşma hızı) sunumunuz oldukça başarılı. Ancak cevap içerik olarak çok zayıf. 'Kendime bir şeyler katıyorum' ifadesi son derece genel ve somut bir bilgi vermiyor. Hangi konuda çalıştığınızı, ne tür beceriler kazandığınızı veya bir proje örneği vermeniz gerekirdi. Ayrıca, 'liderlik', 'uzmanlaşma', 'strateji' gibi beklenen anahtar kelimelerden hiçbiri cevapta yer almıyor. Cevabınızı STAR (Durum, Görev, Aksiyon, Sonuç) metoduyla yapılandırarak ve spesifik örneklerle zenginleştirerek çok daha etkili hale getirebilirsiniz.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 2,
+      "question": "Kariyerinde seni zorlayan en büyük teknik sorun neydi ve bu sorunu nasıl aştın?",
+      "category": "kişisel",
+      "answer": "Adıma ile açtım stackoverflow sitesine girdim ve cevapları kontrol ederek kendimi bir çözüm ürettim.",
+      "score": 6,
+      "feedback": "Cevap, doğru bir problem çözme yaklaşımını (araştırma ve kendi çözümünü üretme) gösteriyor. Bu olumlu. Ancak, cevap çok kısa ve detaydan yoksun. STAR (Durum, Görev, Aksiyon, Sonuç) metodunu kullanarak, karşılaşılan problemin ne olduğu, hangi adımların atıldığı, yapılan denemeler ('deneme') ve ulaşılan sonuç hakkında daha fazla bilgi vererek cevabı çok daha güçlü kılabilirdiniz. 'azim' gibi anahtar kelimeleri içeren daha kapsamlı bir anlatım, yetkinliğinizi daha iyi sergilerdi.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 3,
+      "question": "Bir projeyi tamamlarken, başarıyı sizin için tanımlayan temel 2 ölçüt nedir (teknik detaylar hariç)?",
+      "category": "kişisel",
+      "answer": "azim ve kararlılık",
+      "score": 3,
+      "feedback": "Ses analizi sonuçlarınız (akıcılık, ses tonu) kendinize güvenerek konuştuğunuzu gösterse de, cevap içerik olarak çok zayıf. Sadece iki kelimeden oluşması, sorulan soruya dair hiçbir detay, örnek veya bağlam sunmuyor. Ayrıca, beklenen anahtar kelimelerin ('kullanıcı-memnuniyeti', 'teslimat', 'değer', 'etki') hiçbiri kullanılmamış. Bu tür nitelikleri belirtirken, onları geçmiş deneyimlerinizden somut bir örnekle (örneğin STAR tekniği ile) destekleyerek yarattığınız etkiyi göstermeniz, cevabınızı çok daha güçlü kılacaktır.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 4,
+      "question": "Aldığınız bir eğitim (online kurs, sertifika) kariyerinizde somut olarak neyi değiştirdi? Bir örnekle anlatın.",
+      "category": "kişisel",
+      "answer": "Cevap algılanamadı; lütfen tekrar sorunuz.",
+      "score": 1,
+      "feedback": "The provided text is not an answer but a request for clarification. It does not address the potential question and is missing all the keywords.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 5,
+      "question": "Bir görevin tamamlanma süresi hakkında yanlış tahminde bulundunuz. Teslim tarihi yaklaşırken durumu nasıl ele alırsınız?",
+      "category": "kişisel",
+      "answer": "Daha çok çalışır ve mecburen çalışmam ve teslim tarihini yetiştirmem gerektiği için daha çok çalışırım.",
+      "score": 4,
+      "feedback": "Cevap, güçlü bir çalışma ahlakı ve sorumluluk bilinci gösteriyor, bu olumlu. Ancak, çözüm olarak sadece 'daha çok çalışmayı' sunması, stratejik düşünme ve iletişim becerilerini göstermede zayıf kalıyor. Daha etkili bir cevap, sorunu erkenden tespit edip ilgili kişilerle iletişim kurmayı (erken-iletişim, şeffaflık), görevleri yeniden önceliklendirmeyi (revize-plan) veya gerekirse destek istemeyi (kaynak) de içermelidir. Bu haliyle cevap, proaktif problem çözme yerine reaktif bir yaklaşım sergiliyor.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 6,
+      "question": "Sizin için en önemli olan geri bildirim türü nedir (Yönetici, Akran, Müşteri) ve neden?",
+      "category": "kişisel",
+      "answer": "Müşteri Çünkü her zaman müşteri ne derse haklıdır. Müşterinin istediği ve müşterinin memnuniyeti her zaman en öndedir.",
+      "score": 4,
+      "feedback": "Cevabınız müşteri odaklı olduğunuzu gösteriyor, bu olumlu bir başlangıç. Ancak, 'müşteri her zaman haklıdır' ifadesi günümüz iş dünyasında her zaman geçerli olmayan, klişe bir yaklaşımdır. Bu cevap, bir müşterinin talebinin şirket politikalarına veya teknik imkanlara aykırı olduğu karmaşık durumları göz ardı ediyor. Cevabınızı güçlendirmek için, farklı öncelikleri nasıl dengelediğinizi gösteren somut bir örnek verebilir ve bu süreçte müşteri geri bildirimlerini nasıl kullandığınızı anlatabilirsiniz. Mevcut haliyle cevap çok kısa ve yeterli derinliği sunmuyor.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 7,
+      "question": "Çalışma saatleri dışında kişisel projeler yapıyor musunuz? Bu projelerin katkısı nedir?",
+      "category": "kişisel",
+      "answer": "Fener'in katkısı işe alınma mı sağlayacak? Böylece kendimi geliştirmiş ve en azından ortada bir ürün çıkarmış olacak.",
+      "score": 3,
+      "feedback": "Cevabın ikinci kısmı kişisel gelişim ve pratik sonuç elde etme (ürün çıkarma) motivasyonunuzu göstermesi açısından olumlu. İnisiyatif aldığınızı ima ediyor. Ancak, 'Fener'in katkısı işe alınma mı sağlayacak?' sorusu profesyonel bir mülakat için sorgulayıcı, samimiyetten uzak ve uygun olmayan bir başlangıç. Bu ifade, motivasyonunuzu sadece işe alınma beklentisine indirgiyor ve işbirliğine kapalı bir izlenim bırakabilir. Cevap ayrıca çok kısa ve projenin detayları, öğrenim süreci (eğitim) ve denemeler hakkında bilgi içermiyor. Ses analizindeki başarınızı, içeriği zenginleştirerek ve daha profesyonel bir dil kullanarak desteklemelisiniz.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 8,
+      "question": "Bir ekip arkadaşınızın iş yükü altında ezildiğini fark ettiniz. Nasıl bir yaklaşımla yardım edersiniz?",
+      "category": "kişisel",
+      "answer": "Yak olmasını sağlarım. Böylece daha rahat ve iyi çalışabilecek bir işe gelir.",
+      "score": 4,
+      "feedback": {
+        "tr": {
+          "positive": "Ses analizi sonuçlarınıza göre sunumunuz (akıcılık, ses tonu) oldukça güçlü, bu da kendinize güvendiğinizi gösteriyor. Cevabınızın niyeti olumlu; bir başkasının daha iyi ve rahat çalışmasına yardımcı olma isteğinizi belirtiyorsunuz.",
+          "negative": "Cevabınızda birkaç kritik eksiklik bulunuyor. İlk olarak, 'Yak olmasını sağlarım' ifadesi anlamsız ve muhtemelen bir dil sürçmesi. Bu durum, mesajınızın netliğini tamamen ortadan kaldırıyor. İkinci olarak, cevap çok genel ve soyut. Bunu 'nasıl' yapacağınıza dair hiçbir detay veya somut adım içermiyor. 'Destek' veya 'iletişim' gibi anahtar kelimeleri kullanarak bir eylem planı sunmak çok daha etkili olurdu.",
+          "suggestion": "Gelecekte, ne yapacağınızı söyledikten sonra bunu 'nasıl' yapacağınızı somut adımlarla açıklamaya odaklanın. Örneğin, 'Önce o kişiyle özel bir görüşme yaparak durumu anlamaya çalışırım. Empati kurarak dinler ve ne tür bir desteğe ihtiyacı olduğunu belirlemek için açık iletişim kurarım.' gibi bir cevap, yetkinliğinizi çok daha iyi gösterir."
+        },
+        "en": {
+          "positive": "According to your voice analysis results, your delivery (fluency, tone) is quite strong, which shows confidence. The intent of your answer is positive; you express a desire to help someone else work better and more comfortably.",
+          "negative": "Your answer has a few critical flaws. Firstly, the phrase 'Yak olmasını sağlarım' is nonsensical and likely a slip of the tongue. This completely obscures the clarity of your message. Secondly, the answer is very general and abstract. It contains no detail or concrete steps on 'how' you would achieve this. Presenting an action plan using keywords like 'support' or 'communication' would have been much more effective.",
+          "suggestion": "In the future, focus on explaining 'how' you will do something after stating what you will do. For example, an answer like, 'First, I would have a private conversation with that person to understand the situation. I would listen with empathy and establish open communication to determine what kind of support they need,' would demonstrate your competence much more effectively."
+        }
+      },
+      "difficulty": "Bilinmeyen"
+    }
+  ]
+}

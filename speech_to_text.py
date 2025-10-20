@@ -118,12 +118,19 @@ def record_and_convert():
         print("Çok kısa bir kayıt yapıldı. Lütfen tekrar deneyin.")
         return None
 
-    # Zaman damgalı dosya adı oluştur
+    # Geçici dosya adı oluştur (ana dizinde)
+    import tempfile
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    audio_filename = f"recording_{timestamp}.wav"
+    temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    temp_file.close()
+    audio_filepath = temp_file.name
 
-    # Ses dosyasını kaydet
-    audio_filepath = save_audio_file(frames, audio_filename)
+    # Ses dosyasını geçici olarak kaydet
+    with wave.open(audio_filepath, 'wb') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(frames))
 
     # Ses verisini byte array'e dönüştür
     audio_data = b''.join(frames)
@@ -156,10 +163,18 @@ def record_and_convert():
         print(f"\n Dönüştürülen metin: '{transcript}'")
         print(f"Güvenilirlik skoru: {confidence:.2%}\n")
 
+        # Geçici dosyayı sil
+        try:
+            if os.path.exists(audio_filepath):
+                os.remove(audio_filepath)
+                print("Geçici ses dosyası silindi")
+        except Exception as e:
+            print(f"Geçici dosya silme hatası: {e}")
+
         return {
             'transcript': transcript,
             'confidence': confidence,
-            'audio_file': audio_filepath,
+            'audio_file': None,  # Artık dosya yok
             'timestamp': timestamp
         }
 

@@ -25,7 +25,7 @@ class InterviewHandler:
         - questions: list of dict (her dict soruyu temsil eder)
         """
         self.questions: List[Dict] = self._load_questions(question_dir)
-        self.history: List[Dict] = []
+        self.history: List[Dict] = [] 
         self.current_phase = "kişisel"  # kişisel -> teknik1 -> teknik2 -> senaryo -> takip
         self.phase_questions_asked = 0 
         self.last_scenario: Optional[Dict] = None
@@ -304,9 +304,9 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
                 except Exception:
                     fallback_id = None
 
-                if fallback_id:
-                    fb = self.get_question_by_id(fallback_id)
-                    if fb and fb.get("kategori") == "teknik" and fb["id"] not in asked_ids:
+            if fallback_id:
+                fb = self.get_question_by_id(fallback_id)
+                if fb and fb.get("kategori") == "teknik" and fb["id"] not in asked_ids:
                         fb_cands = self._filter_by_prereqs([fb])
                         target = self._target_difficulty_from_last("teknik2")
                         pick = self._choose_by_difficulty(fb_cands, target)
@@ -439,16 +439,30 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
         remaining = [q for q in self.questions if q["id"] not in asked_ids]
         if remaining:
             return random.choice(remaining)
-        
+
         return random.choice(self.questions)
 
     def advance_phase(self):
         """Mülakat fazını ilerletir"""
-        phase_order = ["kişisel", "kişisel", "teknik1", "teknik2", "teknik3", "teknik4", "senaryo", "takip"]
-        current_index = phase_order.index(self.current_phase) if self.current_phase in phase_order else 0
+        # Soru sayısına göre faz belirle
+        question_count = len(self.history)
         
-        if current_index < len(phase_order) - 1:
-            self.current_phase = phase_order[current_index + 1]
+        if question_count == 0:
+            self.current_phase = "kişisel"
+        elif question_count == 1:
+            self.current_phase = "kişisel"  # 2. kişisel soru
+        elif question_count == 2:
+            self.current_phase = "teknik1"  # 1. teknik soru
+        elif question_count == 3:
+            self.current_phase = "teknik2"  # 2. teknik soru (bağlı)
+        elif question_count == 4:
+            self.current_phase = "teknik3"  # 3. teknik soru
+        elif question_count == 5:
+            self.current_phase = "teknik4"  # 4. teknik soru (bağlı)
+        elif question_count == 6:
+            self.current_phase = "senaryo"  # Senaryo sorusu
+        elif question_count == 7:
+            self.current_phase = "takip"    # Takip sorusu
         else:
             self.current_phase = "tamamlandı"
 
@@ -490,26 +504,45 @@ Create:
 1) A concise personalized scenario-based question that fits the candidate (1-2 sentences).
 2) A follow-up question that digs deeper into the candidate's decision.
 
-Return JSON: {{ "scenario": "...", "follow_up": "..." }}
+IMPORTANT: Return ONLY valid JSON in this exact format:
+{{"scenario": "Your scenario question here", "follow_up": "Your follow-up question here"}}
 """
         model = genai.GenerativeModel("gemini-2.5-pro")
         resp = model.generate_content(prompt, generation_config=genai.types.GenerationConfig(max_output_tokens=250))
         
         try:
             text = resp.text
+            print(f"DEBUG: Gemini senaryo cevabı: {text}")
         except ValueError as e:
             print(f"Scenario response hatası: {e}")
             return {"scenario": "Kişiselleştirilmiş senaryo sorusu", "follow_up": "Bu durumda nasıl ilerlerdin?"}
         
         try:
-            import re, json as _json
-            m = re.search(r"(\{.*\})", text, re.DOTALL)
-            if m:
-                return _json.loads(m.group(1))
-            else:
-                return {"scenario": text.strip(), "follow_up": "Bu durumda nasıl ilerlerdin?"}
+            import json as _json
+            # Önce direkt JSON parse dene
+            try:
+                return _json.loads(text.strip())
+            except:
+                # JSON bulmaya çalış
+                import re
+                m = re.search(r'\{[^{}]*"scenario"[^{}]*"follow_up"[^{}]*\}', text, re.DOTALL)
+                if m:
+                    return _json.loads(m.group(0))
+                else:
+                    # Son çare: metni böl
+                    lines = text.strip().split('\n')
+                    scenario = "Kişiselleştirilmiş senaryo sorusu"
+                    follow_up = "Bu durumda nasıl ilerlerdin?"
+                    
+                    for line in lines:
+                        if 'scenario' in line.lower():
+                            scenario = line.split(':', 1)[-1].strip().strip('"')
+                        elif 'follow' in line.lower():
+                            follow_up = line.split(':', 1)[-1].strip().strip('"')
+                    
+                    return {"scenario": scenario, "follow_up": follow_up}
         except Exception as e:
             print(f"Scenario JSON parse hatası: {e}")
-            return {"scenario": text.strip(), "follow_up": "Bu durumda nasıl ilerlerdin?"}
+            return {"scenario": "Kişiselleştirilmiş senaryo sorusu", "follow_up": "Bu durumda nasıl ilerlerdin?"}
 
 

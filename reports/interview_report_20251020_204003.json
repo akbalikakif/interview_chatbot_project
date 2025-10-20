@@ -1,0 +1,98 @@
+{
+  "candidate_name": "Aday",
+  "interview_date": "2025-10-20 20:40:03",
+  "total_questions": 8,
+  "scores": {
+    "average": 2.4,
+    "total": 19,
+    "max": 6,
+    "min": 1,
+    "count": 8
+  },
+  "phases": {
+    "kişisel": 2.0,
+    "teknik": 3.2,
+    "senaryo": 1.0
+  },
+  "recommendations": [
+    "Performans düşük. Temel becerilerin geliştirilmesi gerekiyor.",
+    "Kapsamlı eğitim programı ve yakın mentorluk önerilir.",
+    "Kişisel iletişim becerilerini geliştirmek için sunum ve toplantı pratikleri önerilir.",
+    "Teknik bilgi eksikliği var. İlgili teknolojilerde derinlemesine çalışma önerilir.",
+    "Problem çözme becerilerini geliştirmek için case study çalışmaları önerilir."
+  ],
+  "detailed_analysis": [
+    {
+      "question_number": 1,
+      "question": "Kariyerinde seni zorlayan en büyük teknik sorun neydi ve bu sorunu nasıl aştın?",
+      "category": "kişisel",
+      "answer": "Soruyu çözememek soruyu çözdüm ve mükemmel bir insan oldum.",
+      "score": 1,
+      "feedback": "Cevap anlamsız ve bir problem çözme sürecini açıklamıyor. 'Araştırma', 'deneme', 'çözüm-adımı' gibi beklenen anahtar kelimeleri veya kavramları içermiyor. 'Mükemmel bir insan oldum' ifadesi profesyonel bir mülakat için uygun değildir ve sorulan soruyla ilgisizdir. Ses analizi skorları yüksek olsa da, içeriğin kalitesi çok düşüktür.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 2,
+      "question": "Bir iş arkadaşın veya yöneticinle bir teknik konuda fikir ayrılığı yaşadığında yaklaşımın ne olur?",
+      "category": "kişisel",
+      "answer": "Doğru olduğunu bildiğini söylerim ve birlikte benim Fikrimin uygularız.",
+      "score": 3,
+      "feedback": "Cevap kendinden emin bir duruş sergiliyor ancak takım çalışması ve profesyonel iletişim becerileri açısından önemli eksiklikler içeriyor.\n\n*   **Eksik Noktalar:** Cevap, 'argüman', 'kanıt' veya 'veri' gibi unsurlara dayanarak karşı tarafı ikna etme sürecini atlıyor. Sadece 'doğru olduğunu bildiğini' söylemek, işbirliğine kapalı ve dayatmacı bir izlenim bırakıyor. 'Birlikte benim fikrimi uygularız' ifadesi, işbirliğinden çok, kendi fikrini kabul ettirme amacı taşıdığını gösteriyor.\n*   **İyileştirme Önerisi:** Daha 'çözüm-odaklı' bir yaklaşım, öncelikle karşı tarafın bakış açısını anlamaya çalıştığınızı, ardından kendi fikrinizi verilerle ve kanıtlarla destekleyerek sunduğunuzu belirtmek olurdu. Amaç, 'benim fikrimi uygulamak' yerine, 'en doğru çözümü birlikte bulmak' olmalıdır. Bu yaklaşım, işbirliğine daha yatkın olduğunuzu gösterir.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 3,
+      "question": "Gömülü Sistemlerin çalıştığı ortamlar genellikle neden kısıtlı kaynaklara sahiptir?",
+      "category": "teknik",
+      "answer": "Çünkü bilgisayarlar zaten kısıtlı kaynaklara sahip olduğu için gömülü sistemler bilgisayarın kısıtlı kaynaklarını kullanarak çalışmak zorundadır.",
+      "score": 4,
+      "feedback": "Cevabın temel fikri doğru ve ses analizine göre sunumunuz oldukça akıcı. Ancak cevap, 'neden' sorusunu açıklamak yerine durumu tespit ediyor ve döngüsel bir mantık içeriyor. Gömülü sistemlerin kaynaklarının kısıtlı olmasının arkasındaki **maliyet**, **güç tüketimi** ve **fiziksel kısıtlamalar** gibi temel sebeplere değinmek cevabınızı çok daha güçlü kılardı.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 4,
+      "question": "Veri Analitiği'nin temel hedefi nedir?",
+      "category": "teknik",
+      "answer": "lerden anlamlı bilgiler çıkarmak ve bunu içgörüler de kullanarak Geleceğe dair belli tahminlerde bulunmak",
+      "score": 6,
+      "feedback": "Cevabın temel fikri doğru ve 'içgörü' anahtar kelimesini kullanmanız olumlu. Ses analizi sonuçlarınız, özellikle akıcılığınız, konuya hakim ve kendinize güvenli bir duruş sergilediğinizi gösteriyor. Ancak, cevap oldukça kısa ve cümlenin başı ('Verilerden' gibi) eksik olduğu için tamamlanmamış hissi veriyor. Cevabınızı 'ham veri'den bahsederek başlatmak ve bu sürecin nihai amacının 'karar mekanizmalarını desteklemek' olduğunu eklemek, ifadenizi çok daha güçlü ve kapsamlı hale getirecektir.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 5,
+      "question": "DevOps yaklaşımının temel faydası nedir?",
+      "category": "teknik",
+      "answer": "Çözümler sunma mızı sağlar ve böylece daha rahat bir şekilde çözüm üretebiliriz.",
+      "score": 2,
+      "feedback": "Ses analizi sonuçlarınız (akıcılık, konuşma hızı) çok olumlu olsa da, cevabın içeriği son derece zayıf. Cümle, 'çözüm' kelimesini tekrar ederek anlamsal olarak bir değer katmıyor ve fazlasıyla genel kalıyor. Herhangi bir somut örnek, detay veya istenen anahtar kelimelerden ('teslimat-hızı', 'güvenilirlik', 'otomasyon', 'iş-birliği') hiçbiri kullanılmamış. Bu cevap, konu hakkında bilgi sahibi olduğunuzu göstermemektedir. Cevaplarınızı spesifik örneklerle ve sonuç odaklı bilgilerle desteklemelisiniz.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 6,
+      "question": "Bir web sayfasına erişirken kullanılan HTTP durum kodlarından 200, 404 ve 500 ne anlama gelir?",
+      "category": "teknik",
+      "answer": "Bulunamadı 200 işte olmadı altın Hafiz ne olduğunu bilmiyorum.",
+      "score": 1,
+      "feedback": "The answer is completely incoherent and nonsensical. While it mentions correct keywords like '200' and 'Bulunamadı' (404 Not Found), they are used randomly without any logical structure or explanation. The response demonstrates a severe lack of understanding of the topic. The low fluency score (44.4/100) from the voice analysis confirms the disjointed nature of the answer.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 7,
+      "question": "Kişiselleştirilmiş senaryo sorusu",
+      "category": "senaryo",
+      "answer": "Cevap algılanamadı; lütfen tekrar sorunuz.",
+      "score": 1,
+      "feedback": "This is not an answer to an interview question. The provided text is in Turkish and translates to 'Answer could not be perceived; please ask your question again.' It is an error message or a request for clarification, not a response to be evaluated.",
+      "difficulty": "Bilinmeyen"
+    },
+    {
+      "question_number": 8,
+      "question": "Bu durumda nasıl ilerlerdin?",
+      "category": "senaryo",
+      "answer": "lerle mezdim",
+      "score": 1,
+      "feedback": "The provided answer is incomprehensible and does not contain any meaningful words or sentences. It is impossible to evaluate the content, relevance, or structure of the response. While the voice analysis metrics are high, the substance of the answer is non-existent.",
+      "difficulty": "Bilinmeyen"
+    }
+  ]
+}

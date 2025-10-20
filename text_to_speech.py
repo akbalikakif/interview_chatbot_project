@@ -42,33 +42,51 @@ def text_to_speech_playback(text):
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
 
-        # Gelen ses verisini bir WAVE dosyası olarak kaydet
-        with open("output.wav", "wb") as out:
-            out.write(response.audio_content)
+        # Geçici dosya oluştur (ana dizinde)
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+            temp_file.write(response.audio_content)
+            audio_file = temp_file.name
 
         # Sesi oynatmak için PyAudio'yu kullan
         print("Yanıt oynatılıyor...")
         p = pyaudio.PyAudio()
+        stream = None
+        
+        try:
+            with wave.open(audio_file, 'rb') as wf:
+                stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                                channels=wf.getnchannels(),
+                                rate=wf.getframerate(),
+                                output=True)
 
-        with wave.open('output.wav', 'rb') as wf:
-            stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                            channels=wf.getnchannels(),
-                            rate=wf.getframerate(),
-                            output=True)
-
-            data = wf.readframes(1024)
-            while data:
-                stream.write(data)
                 data = wf.readframes(1024)
-
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
+                while data:
+                    stream.write(data)
+                    data = wf.readframes(1024)
+                
+                # Stream'i hemen kapat
+                stream.stop_stream()
+                stream.close()
+        except Exception as e:
+            print(f"Oynatma hatası: {e}")
+        finally:
+            # PyAudio'yu kapat
+            try:
+                p.terminate()
+            except:
+                pass
+        
+        # Oynatma bittikten sonra kısa bekleme ve dosyayı sil
+        import time
+        time.sleep(0.5)  # Kısa bekleme
+        
+        try:
+            if os.path.exists(audio_file):
+                os.remove(audio_file)
+                print("Geçici ses dosyası silindi")
+        except Exception as e:
+            print(f"Dosya silme hatası: {e}")
 
     except Exception as e:
         print(f"TTS API hatası: {e}")
-
-
-if __name__ == "__main__":
-    test_text = "Merhaba, bir bilgisayar mühendisliği mülakatına hoş geldiniz. Hazır olduğunuzda konuşabilirsiniz."
-    text_to_speech_playback(test_text)
