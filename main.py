@@ -1,20 +1,59 @@
 # main.py
 from llm_handler import InterviewHandler
+from text_to_speech import text_to_speech_playback
+from speech_to_text import record_and_convert
 import random
 
 def run_interview():
     ih = InterviewHandler(question_dir="question_pool")
-    # Basit başlangıç: kişisel kategorisinden 1 soru al (varsa)
-    personal_questions = [q for q in ih.questions if q.get("kategori") == "kişisel"]
-    if not personal_questions:
-        raise SystemExit("Kişisel sorular bulunamadı. data/question_pool içinde json'leri kontrol et.")
-    # 1. soru: rastgele kişisel
-    current_q = random.choice(personal_questions)
+    # Test: teknik aşamalardan başla
+    ih.current_phase = "teknik1"
+    
+    print("=== Akıllı Mülakat Sistemi ===")
+    print("Mülakat akışı:")
+    print("1. Kişisel soru (bağımsız)")
+    print("2. Kişisel soru (bağımsız)")
+    print("3. Teknik soru (bağımsız)")
+    print("4. Teknik soru (3. soruya bağlı)")
+    print("5. Teknik soru (bağımsız)")
+    print("6. Teknik soru (5. soruya bağlı)")
+    print("7. Senaryo sorusu (kişiselleştirilmiş)")
+    print("8. Senaryo takip sorusu")
+    print("\nMülakat başlıyor...\n")
 
     total_turns = 8
     for turn in range(1, total_turns + 1):
-        print(f"\nSoru {turn}: {current_q['soru']}")
-        user_answer = input("Cevabınız: ").strip()
+        # Akıllı akışa göre soru seç
+        current_q = ih.get_next_question_by_phase()
+        print(f"\n=== Soru {turn} ({ih.current_phase.upper()}) ===")
+        print(f"Soru: {current_q['soru']}")
+        # Soruyu seslendir
+        try:
+            text_to_speech_playback(current_q['soru'])
+        except Exception as e:
+            print(f"TTS oynatma hatası: {e}")
+        # Debug: zorluk düzeyi göster
+        try:
+            print(f"Zorluk: {current_q.get('difficulty_level', 'N/A')}")
+        except Exception:
+            pass
+        
+        # Kullanıcıdan sesli cevap al (Google STT)
+        print("Cevabınızı mikrofona söyleyin...")
+        stt_result = None
+        try:
+            stt_result = record_and_convert()
+        except Exception as e:
+            print(f"STT hatası: {e}")
+            stt_result = None
+
+        if stt_result and stt_result.get('transcript'):
+            user_answer = stt_result['transcript']
+            print(f"Algılanan cevap: {user_answer}")
+        else:
+            # STT başarısızsa güvenli geri dönüş: kısa varsayılan cevap
+            user_answer = "Cevap algılanamadı; lütfen tekrar sorunuz."
+            print("STT başarısız, varsayılan cevap kullanılacak.")
 
         # Gemini ile analiz
         analysis = ih.analyze_answer_with_gemini(user_answer, current_q.get("anahtar_kelimeler", []))
@@ -22,38 +61,20 @@ def run_interview():
         print(analysis.get("feedback", analysis))
         print("Puan:", analysis.get("score"))
 
-        # Kaydet
+        # Kaydet (bu otomatik olarak fazı ilerletir)
         ih.record_turn(current_q, user_answer, analysis)
 
-        # Eğer son 2 soruya geldiysek (örn. 7 veya 8), senaryo üret
-        if turn == 7:
-            scenario = ih.generate_personal_scenario()
-            print("\nSenaryo sorusu (kişiselleştirilmiş):")
-            print(scenario.get("scenario"))
-            # kullanıcıdan cevap al
-            ans = input("Cevabınız: ")
-            a = ih.analyze_answer_with_gemini(ans, [])
-            ih.record_turn({"id": "SCENARIO", "soru": scenario.get("scenario"), "difficulty_level": 3}, ans, a)
-            # Son takip sorusu
-            print("\nTakip sorusu:")
-            print(scenario.get("follow_up"))
-            ans2 = input("Cevabınız: ")
-            a2 = ih.analyze_answer_with_gemini(ans2, [])
-            ih.record_turn({"id": "SCENARIO_FOLLOW", "soru": scenario.get("follow_up"), "difficulty_level": 3}, ans2, a2)
+        # Mülakat tamamlandı mı kontrol et
+        if ih.current_phase == "tamamlandı":
             break
 
-        # Normal akış: bir sonraki soru seç
-        next_q = ih.select_next_question(current_q.get("id"), user_answer)
-
-        # Güvenlik: aynı soruyu tekrar sormamak için en fazla 10 tekrar dene
-        attempts = 0
-        while next_q["id"] in {h["id"] for h in ih.history} and attempts < 10:
-            next_q = ih.select_next_question(current_q.get("id"), user_answer)
-            attempts += 1
-
-        current_q = next_q
-
-    print("\nMülakat tamamlandı. Teşekkürler!")
+    print("\n=== Mülakat Tamamlandı ===")
+    print("Teşekkürler! Değerlendirme raporu hazırlanıyor...")
+    
+    # Özet rapor
+    print("\n--- Mülakat Özeti ---")
+    for i, h in enumerate(ih.history, 1):
+        print(f"{i}. {h.get('kategori', 'Bilinmeyen')} - Puan: {h.get('analysis', {}).get('score', 'N/A')}")
 
 if __name__ == "__main__":
     run_interview()

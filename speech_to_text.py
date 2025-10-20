@@ -157,6 +157,7 @@ def record_and_convert():
         print(f"Güvenilirlik skoru: {confidence:.2%}\n")
 
         return {
+            'transcript': transcript,
             'confidence': confidence,
             'audio_file': audio_filepath,
             'timestamp': timestamp
