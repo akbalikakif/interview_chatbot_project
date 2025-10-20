@@ -4,14 +4,39 @@ from text_to_speech import text_to_speech_playback
 from speech_to_text import record_and_convert
 from analysis_handler import AnalysisHandler
 from reports import generate_final_report
+from cv_manager import CVManager
 import random
 import os
 import shutil
 import warnings
 warnings.filterwarnings("ignore")
 
-def run_interview():
-    ih = InterviewHandler(question_dir="question_pool")
+def run_interview(cv_path: str = None):
+    """
+    Mülakat sistemini başlatır
+    
+    Args:
+        cv_path: CV dosyasının yolu (opsiyonel). PDF, DOCX veya TXT formatında olabilir.
+    """
+    # CV varsa analiz et
+    cv_tags = []
+    if cv_path:
+        print("\n=== CV ANALİZİ ===")
+        try:
+            cv_manager = CVManager()
+            if cv_manager.load_cv(cv_path):
+                cv_analysis = cv_manager.analyze_cv_with_llm()
+                if cv_analysis:
+                    cv_tags = cv_manager.get_matching_tags()
+                    print(f"\n✅ CV analizi tamamlandı!")
+                    print(f"   Toplam {len(cv_tags)} etiket çıkarıldı")
+                    print(f"   Teknik sorular CV'nize göre özelleştirilecek\n")
+        except Exception as e:
+            print(f"⚠️ CV analizi hatası: {e}")
+            print("   Mülakat CV olmadan devam edecek\n")
+    
+    # Interview Handler'ı CV etiketleriyle başlat
+    ih = InterviewHandler(question_dir="question_pool", cv_tags=cv_tags)
     # Doğru akış: kişisel sorulardan başla
     ih.current_phase = "kişisel"
     
@@ -190,4 +215,16 @@ Ses Analizi Sonuçları:
         print(f"Ses dosyası temizleme hatası: {e}")
 
 if __name__ == "__main__":
-    run_interview()
+    import sys
+    
+    # Komut satırından CV yolu alınabilir
+    # Kullanım: python main.py
+    # Kullanım: python main.py cv.pdf
+    # Kullanım: python main.py my_resume.docx
+    
+    cv_path = None
+    if len(sys.argv) > 1:
+        cv_path = sys.argv[1]
+        print(f"CV dosyası: {cv_path}")
+    
+    run_interview(cv_path=cv_path)

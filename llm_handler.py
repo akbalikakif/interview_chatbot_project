@@ -19,16 +19,18 @@ if not API_KEY:
 genai.configure(api_key=API_KEY)
 
 class InterviewHandler:
-    def __init__(self, question_dir: str = "question_pool"):
+    def __init__(self, question_dir: str = "question_pool", cv_tags: List[str] = None):
         """
         - question_dir altındaki tüm .json dosyalarını yükler.
         - questions: list of dict (her dict soruyu temsil eder)
+        - cv_tags: CV'den çıkarılan etiketler (opsiyonel)
         """
         self.questions: List[Dict] = self._load_questions(question_dir)
         self.history: List[Dict] = [] 
         self.current_phase = "kişisel"  # kişisel -> teknik1 -> teknik2 -> senaryo -> takip
         self.phase_questions_asked = 0 
         self.last_scenario: Optional[Dict] = None
+        self.cv_tags = cv_tags or []  # CV bazlı etiketler
         # Seçim sırasında kullanacağımız hedef zorluk default değerleri
         self.default_difficulty_by_phase = {
             "teknik1": 1,
@@ -99,16 +101,34 @@ class InterviewHandler:
         return satisfied
 
     def _filter_by_prereqs(self, candidates: List[Dict]) -> List[Dict]:
-        """prereq_tags alanı, önceki yanıtlarda tatmin edilmiş olmalı."""
-        if not candidates:
-            return candidates
-        satisfied = self._collect_satisfied_tags()
-        filtered = []
+        """Ön koşul kontrolü yapar"""
+        out = []
         for q in candidates:
-            prereqs = [str(t).lower() for t in q.get("prereq_tags", [])]
-            if all((p in satisfied) for p in prereqs):
-                filtered.append(q)
-        return filtered or candidates  # hiçbiri kalmazsa, orijinal listeyi kullan (yumuşak kısıt)
+            prereqs = q.get("prereq_tags", [])
+            if not prereqs:
+                out.append(q)
+                continue
+            # Geçmiş cevaplarda bu etiketler var mı?
+            all_tags = set()
+            for h in self.history:
+                all_tags.update(h.get("tags", []))
+            if all(tag in all_tags for tag in prereqs):
+                out.append(q)
+        return out
+    
+    def _filter_by_cv_tags(self, candidates: List[Dict]) -> List[Dict]:
+        """CV etiketlerine göre soruları filtrele"""
+        if not self.cv_tags:
+            return candidates
+        
+        matched = []
+        for q in candidates:
+            q_tags = q.get("tags", [])
+            # Soru etiketleri ile CV etiketleri kesişiyor mu?
+            if any(tag.lower() in [cv_tag.lower() for cv_tag in self.cv_tags] for tag in q_tags):
+                matched.append(q)
+        
+        return matched if matched else candidates  # Eşleşme yoksa tüm adayları döndür
 
     def _choose_by_difficulty(self, candidates: List[Dict], target: Optional[int]) -> Optional[Dict]:
         """Hedef zorluğa en yakın soruyu seç. Hedef yoksa rastgele."""
@@ -240,12 +260,20 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
                     return random.choice(candidates)
         
         elif self.current_phase == "teknik1":
-            # Teknik soru (bağımsız)
+            # Teknik soru (bağımsız) - CV bazlı eşleştirme
             candidates = [q for q in self.questions 
                         if q.get("kategori") == "teknik" 
                         and q.get("follow_up_to") is None
                         and q["id"] not in asked_ids]
             candidates = self._filter_by_prereqs(candidates)
+            
+            # CV etiketlerine göre filtrele (varsa)
+            if self.cv_tags:
+                cv_matched = self._filter_by_cv_tags(candidates)
+                if cv_matched:
+                    candidates = cv_matched
+                    print(f"   [CV EŞLEŞTİRME] {len(candidates)} soru CV'ye uygun")
+            
             target = self.default_difficulty_by_phase.get("teknik1")
             pick = self._choose_by_difficulty(candidates, target)
             if pick:
@@ -325,12 +353,20 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
                 return pick
         
         elif self.current_phase == "teknik3":
-            # Teknik soru (bağımsız)
+            # Teknik soru (bağımsız) - CV bazlı eşleştirme
             candidates = [q for q in self.questions 
                         if q.get("kategori") == "teknik" 
                         and q.get("follow_up_to") is None
                         and q["id"] not in asked_ids]
             candidates = self._filter_by_prereqs(candidates)
+            
+            # CV etiketlerine göre filtrele (varsa)
+            if self.cv_tags:
+                cv_matched = self._filter_by_cv_tags(candidates)
+                if cv_matched:
+                    candidates = cv_matched
+                    print(f"   [CV EŞLEŞTİRME] {len(candidates)} soru CV'ye uygun")
+            
             target = self._target_difficulty_from_last("teknik3")
             pick = self._choose_by_difficulty(candidates, target)
             if pick:
