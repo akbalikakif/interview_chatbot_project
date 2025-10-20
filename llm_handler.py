@@ -1,38 +1,4 @@
-#.
-
-
-
-import os
-import google.generativeai as genai
-from dotenv import load_dotenv
-
-load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-def get_interview_question(topic):
-    try:
-        # Yeni nesil model (Gemini 2.5)
-        model = genai.GenerativeModel("models/gemini-2.5-pro")
-
-        prompt = (
-            f"Sen bir bilgisayar mühendisliği mülakat uzmanısın. "
-            f"Lütfen mülakata yönelik, Türkçe olarak, sadece bir tane soru sor. "
-            f"Soru, mühendislik alanında ve özellikle '{topic}' konusuyla ilgili olsun. "
-            f"Sadece soruyu yaz, açıklama yapma. Yanıtlara örnek verme."
-        )
-
-        response = model.generate_content(prompt)
-        return response.text
-
-    except Exception as e:
-        print(f"Gemini API hatası: {e}")
-        return "Üzgünüm, şu anda bir soru üretemiyorum."
-
-if __name__ == "__main__":
-    topic = "Nesne Yönelimli Programlama"
-    question = get_interview_question(topic)
-    print(f"Üretilen mülakat sorusu: {question}")
-    """
+"""
 llm_handler.py
 InterviewHandler: soru havuzu okuma, cevap analizi (Gemini), bağlamlı soru seçimi,
 fallback ve senaryo üretimi mantığını içerir.
@@ -45,8 +11,6 @@ import google.generativeai as genai
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
 
-
-
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
@@ -54,7 +18,7 @@ if not API_KEY:
 genai.configure(api_key=API_KEY)
 
 class InterviewHandler:
-    def __init__(self, question_dir: str = "data/question_pool"):
+    def __init__(self, question_dir: str = "question_pool"):
         """
         - question_dir altındaki tüm .json dosyalarını yükler.
         - questions: list of dict (her dict soruyu temsil eder)
@@ -113,7 +77,7 @@ class InterviewHandler:
         if not API_KEY:
             return {"score": None, "found": [], "feedback": "API key yok, lokal değerlendirme yapıldı."}
 
-        model = genai.GenerativeModel("gemini-1.5") 
+        model = genai.GenerativeModel("gemini-1.5")
         prompt = f"""
 You are an assistant that evaluates interview answers against reference keywords.
 Answer in JSON with keys: found_keywords (list), score (0-10 integer), feedback (short).
@@ -125,7 +89,7 @@ Reference keywords:
 {reference_keys}
 """
       
-        resp = model.generate_content(prompt=prompt, max_output_tokens=250)
+        resp = model.generate_content(prompt, max_tokens=250)
 
         text = getattr(resp, "text", "") or ""
         try:
@@ -162,15 +126,12 @@ Reference keywords:
         if not preferred:
             preferred = candidates
 
-        
         asked_ids = {h["id"] for h in self.history}
         preferred = [q for q in preferred if q["id"] not in asked_ids]
 
-   
         if preferred:
             return random.choice(preferred)
 
-     
         if current_q:
             fallback_id = current_q.get("fallback_id")
             if fallback_id:

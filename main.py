@@ -3,7 +3,7 @@ from llm_handler import InterviewHandler
 import random
 
 def run_interview():
-    ih = InterviewHandler(question_dir="data/question_pool")
+    ih = InterviewHandler(question_dir="question_pool")
     # Basit başlangıç: kişisel kategorisinden 1 soru al (varsa)
     personal_questions = [q for q in ih.questions if q.get("kategori") == "kişisel"]
     if not personal_questions:
