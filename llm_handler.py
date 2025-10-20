@@ -508,7 +508,20 @@ IMPORTANT: Return ONLY valid JSON in this exact format:
 {{"scenario": "Your scenario question here", "follow_up": "Your follow-up question here"}}
 """
         model = genai.GenerativeModel("gemini-2.5-pro")
-        resp = model.generate_content(prompt, generation_config=genai.types.GenerationConfig(max_output_tokens=250))
+        
+        # Güvenlik ayarlarını gevşet
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        ]
+        
+        resp = model.generate_content(
+            prompt, 
+            generation_config=genai.types.GenerationConfig(max_output_tokens=250),
+            safety_settings=safety_settings
+        )
         
         try:
             text = resp.text

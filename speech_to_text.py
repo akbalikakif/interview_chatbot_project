@@ -52,10 +52,13 @@ def save_audio_file(frames, filename):
     print(f"Ses kaydı kaydedildi: {filepath}")
     return filepath
 
-def record_and_convert():
+def record_and_convert(question_number=None):
     """
     Mikrofondan ses kaydı yapar, sessizlik algıladığında durdurur,
     hem dosyaya kaydeder hem de Google Cloud STT ile metne dönüştürür.
+    
+    Args:
+        question_number: Soru numarası (1, 2, 3, ...). Belirtilirse data/soru-{n}.wav olarak kaydedilir.
     """
     p = pyaudio.PyAudio()
 
@@ -118,19 +121,24 @@ def record_and_convert():
         print("Çok kısa bir kayıt yapıldı. Lütfen tekrar deneyin.")
         return None
 
-    # Geçici dosya adı oluştur (ana dizinde)
-    import tempfile
+    # Ses dosyasını data/ klasörüne kaydet
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-    temp_file.close()
-    audio_filepath = temp_file.name
+    
+    if question_number is not None:
+        # Soru numarasına göre kaydet (soru-1.wav, soru-2.wav, ...)
+        audio_filepath = os.path.join(DATA_DIR, f"soru-{question_number}.wav")
+    else:
+        # Geçici dosya olarak kaydet
+        audio_filepath = os.path.join(DATA_DIR, f"temp_recording_{timestamp}.wav")
 
-    # Ses dosyasını geçici olarak kaydet
+    # Ses dosyasını kaydet
     with wave.open(audio_filepath, 'wb') as wf:
         wf.setnchannels(1)
         wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
+    
+    print(f"Ses kaydedildi: {audio_filepath}")
 
     # Ses verisini byte array'e dönüştür
     audio_data = b''.join(frames)
@@ -163,18 +171,10 @@ def record_and_convert():
         print(f"\n Dönüştürülen metin: '{transcript}'")
         print(f"Güvenilirlik skoru: {confidence:.2%}\n")
 
-        # Geçici dosyayı sil
-        try:
-            if os.path.exists(audio_filepath):
-                os.remove(audio_filepath)
-                print("Geçici ses dosyası silindi")
-        except Exception as e:
-            print(f"Geçici dosya silme hatası: {e}")
-
         return {
             'transcript': transcript,
             'confidence': confidence,
-            'audio_file': None,  # Artık dosya yok
+            'audio_file': audio_filepath,  # Dosya yolu döndürülür
             'timestamp': timestamp
         }
 

@@ -40,9 +40,9 @@ def run_interview():
         current_q = ih.get_next_question_by_phase()
         print(f"\n=== Soru {turn} ({ih.current_phase.upper()}) ===")
         print(f"Soru: {current_q['soru']}")
-        # Soruyu seslendir
+        # Soruyu seslendir ve data/ klasörüne kaydet
         try:
-            text_to_speech_playback(current_q['soru'])
+            text_to_speech_playback(current_q['soru'], question_number=turn, save_to_data=True)
         except Exception as e:
             print(f"TTS oynatma hatası: {e}")
         # Debug: zorluk düzeyi göster
@@ -51,11 +51,11 @@ def run_interview():
         except Exception:
             pass
         
-        # Kullanıcıdan sesli cevap al (Google STT)
+        # Kullanıcıdan sesli cevap al (Google STT) ve data/ klasörüne kaydet
         print("Cevabınızı mikrofona söyleyin...")
         stt_result = None
         try:
-            stt_result = record_and_convert()
+            stt_result = record_and_convert(question_number=turn)
         except Exception as e:
             print(f"STT hatası: {e}")
             stt_result = None
@@ -68,24 +68,56 @@ def run_interview():
             user_answer = stt_result['transcript']
             print(f"Algılanan cevap: {user_answer}")
             
-            # Ses analizi yap (STT'den gelen ses verisi yok, sadece metin analizi)
-            print("Metin analizi yapılıyor...")
-            try:
-                text_analysis = audio_analyzer.analyze_text_for_fillers(user_answer)
-                # Ses analizi olmadığı için sadece metin analizi ile genel skor hesapla
-                overall_audio_score = {
-                    'overall_score': text_analysis['filler_score'],
-                    'scores': {
-                        'akıcılık': text_analysis['filler_score'],
-                        'konuşma_hızı': 80,  # Varsayılan değer
-                        'ses_tonu': 80  # Varsayılan değer
-                    },
-                    'confidence_level': 'metin-bazlı'
-                }
-                print(f"Metin analizi tamamlandı - Genel skor: {overall_audio_score['overall_score']}/100")
-            except Exception as e:
-                print(f"Metin analizi hatası: {e}")
-                overall_audio_score = None
+            # Ses dosyası analizi (eğer dosya varsa)
+            audio_file_path = stt_result.get('audio_file')
+            if audio_file_path and os.path.exists(audio_file_path):
+                print("Ses dosyası analizi yapılıyor...")
+                try:
+                    # Ses dosyasını analiz et
+                    audio_metrics = audio_analyzer.analyze_audio_file(audio_file_path)
+                    
+                    # Metin analizi yap
+                    text_metrics = audio_analyzer.analyze_text_for_fillers(user_answer)
+                    
+                    # Genel skor hesapla (ses + metin)
+                    overall_audio_score = audio_analyzer.calculate_overall_score(audio_metrics, text_metrics)
+                    
+                    print(f"Ses analizi tamamlandı - Genel skor: {overall_audio_score['overall_score']}/100")
+                except Exception as e:
+                    print(f"Ses analizi hatası: {e}")
+                    # Hata durumunda sadece metin analizi yap
+                    try:
+                        text_analysis = audio_analyzer.analyze_text_for_fillers(user_answer)
+                        overall_audio_score = {
+                            'overall_score': text_analysis['filler_score'],
+                            'scores': {
+                                'akıcılık': text_analysis['filler_score'],
+                                'konuşma_hızı': 80,
+                                'ses_tonu': 80
+                            },
+                            'confidence_level': 'metin-bazlı'
+                        }
+                    except Exception as e2:
+                        print(f"Metin analizi hatası: {e2}")
+                        overall_audio_score = None
+            else:
+                # Ses dosyası yoksa sadece metin analizi
+                print("Metin analizi yapılıyor...")
+                try:
+                    text_analysis = audio_analyzer.analyze_text_for_fillers(user_answer)
+                    overall_audio_score = {
+                        'overall_score': text_analysis['filler_score'],
+                        'scores': {
+                            'akıcılık': text_analysis['filler_score'],
+                            'konuşma_hızı': 80,
+                            'ses_tonu': 80
+                        },
+                        'confidence_level': 'metin-bazlı'
+                    }
+                    print(f"Metin analizi tamamlandı - Genel skor: {overall_audio_score['overall_score']}/100")
+                except Exception as e:
+                    print(f"Metin analizi hatası: {e}")
+                    overall_audio_score = None
         else:
             # STT başarısızsa güvenli geri dönüş: kısa varsayılan cevap
             user_answer = "Cevap algılanamadı; lütfen tekrar sorunuz."
@@ -138,24 +170,22 @@ Ses Analizi Sonuçları:
     for i, h in enumerate(ih.history, 1):
         print(f"{i}. {h.get('kategori', 'Bilinmeyen')} - Puan: {h.get('analysis', {}).get('score', 'N/A')}")
     
-    # Ses dosyalarını temizle
+    # Tüm ses dosyalarını temizle (soru-1.wav, soru-2.wav, soru-sesi-1.wav, vb.)
     print("\n--- Ses Dosyaları Temizleniyor ---")
     try:
-        # temp_recording_*.wav dosyalarını sil
-        for filename in os.listdir("data"):
-            if filename.startswith("temp_recording_") and filename.endswith(".wav"):
-                file_path = os.path.join("data", filename)
-                os.remove(file_path)
-                print(f"Silindi: {filename}")
-        
-        # Eski recording_*.wav dosyalarını da sil
-        for filename in os.listdir("data"):
-            if filename.startswith("recording_") and filename.endswith(".wav"):
-                file_path = os.path.join("data", filename)
-                os.remove(file_path)
-                print(f"Silindi: {filename}")
-        
-        print("Tüm geçici ses dosyaları temizlendi.")
+        if os.path.exists("data"):
+            for filename in os.listdir("data"):
+                if filename.endswith(".wav"):
+                    file_path = os.path.join("data", filename)
+                    try:
+                        os.remove(file_path)
+                        print(f"Silindi: {filename}")
+                    except Exception as e:
+                        print(f"{filename} silinirken hata: {e}")
+            
+            print("Tüm ses dosyaları temizlendi.")
+        else:
+            print("data/ klasörü bulunamadı.")
     except Exception as e:
         print(f"Ses dosyası temizleme hatası: {e}")
 

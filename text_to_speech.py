@@ -12,12 +12,14 @@ load_dotenv()
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 
-def text_to_speech_playback(text):
+def text_to_speech_playback(text, question_number=None, save_to_data=False):
     """
     Verilen metni Google Cloud TTS API'si ile sese dönüştürür ve oynatır.
 
     Args:
         text (str): Sese dönüştürülecek metin.
+        question_number (int): Soru numarası (1, 2, 3, ...). Belirtilirse data/soru-sesi-{n}.wav olarak kaydedilir.
+        save_to_data (bool): True ise data/ klasörüne kaydeder, False ise geçici dosya oluşturur.
     """
     try:
         # Google Cloud TTS istemcisini oluştur
@@ -42,11 +44,22 @@ def text_to_speech_playback(text):
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
 
-        # Geçici dosya oluştur (ana dizinde)
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
-            temp_file.write(response.audio_content)
-            audio_file = temp_file.name
+        # Ses dosyasını kaydet
+        if save_to_data and question_number is not None:
+            # data/ klasörüne kaydet
+            data_dir = "data"
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir)
+            audio_file = os.path.join(data_dir, f"soru-sesi-{question_number}.wav")
+            with open(audio_file, 'wb') as f:
+                f.write(response.audio_content)
+            print(f"Soru sesi kaydedildi: {audio_file}")
+        else:
+            # Geçici dosya oluştur
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+                temp_file.write(response.audio_content)
+                audio_file = temp_file.name
 
         # Sesi oynatmak için PyAudio'yu kullan
         print("Yanıt oynatılıyor...")
@@ -77,16 +90,21 @@ def text_to_speech_playback(text):
             except:
                 pass
         
-        # Oynatma bittikten sonra kısa bekleme ve dosyayı sil
+        # Oynatma bittikten sonra kısa bekleme
         import time
         time.sleep(0.5)  # Kısa bekleme
         
-        try:
-            if os.path.exists(audio_file):
-                os.remove(audio_file)
-                print("Geçici ses dosyası silindi")
-        except Exception as e:
-            print(f"Dosya silme hatası: {e}")
+        # Sadece geçici dosyaları sil (data/ klasöründeki dosyalar kalır)
+        if not save_to_data:
+            try:
+                if os.path.exists(audio_file):
+                    os.remove(audio_file)
+                    print("Geçici ses dosyası silindi")
+            except Exception as e:
+                print(f"Dosya silme hatası: {e}")
 
     except Exception as e:
         print(f"TTS API hatası: {e}")
+        return None
+    
+    return audio_file if save_to_data else None
