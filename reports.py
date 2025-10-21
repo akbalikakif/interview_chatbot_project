@@ -19,7 +19,7 @@ try:
     from reportlab.pdfbase.ttfonts import TTFont
     PDF_AVAILABLE = True
 except ImportError:
-    print("⚠️ reportlab kütüphanesi bulunamadı. PDF raporu için: pip install reportlab")
+    print("[UYARI] reportlab kütüphanesi bulunamadı. PDF raporu için: pip install reportlab")
     PDF_AVAILABLE = False
 
 try:
@@ -28,7 +28,7 @@ try:
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     DOCX_AVAILABLE = True
 except ImportError:
-    print("⚠️ python-docx kütüphanesi bulunamadı. Word raporu için: pip install python-docx")
+    print("[UYARI] python-docx kütüphanesi bulunamadı. Word raporu için: pip install python-docx")
     DOCX_AVAILABLE = False
 
 class ReportGenerator:
@@ -61,25 +61,25 @@ class ReportGenerator:
         if PDF_AVAILABLE:
             try:
                 pdf_path = self._create_pdf_report(report_data)
-                print(f"✅ PDF raporu oluşturuldu: {pdf_path}")
+                print(f"[OK] PDF raporu oluşturuldu: {pdf_path}")
             except Exception as e:
-                print(f"❌ PDF oluşturma hatası: {e}")
+                print(f"[HATA] PDF oluşturma hatası: {e}")
         else:
-            print("⚠️ reportlab yüklü değil. PDF raporu oluşturulamadı.")
+            print("[UYARI] reportlab yüklü değil. PDF raporu oluşturulamadı.")
         
         # DOCX raporu oluştur
         docx_path = None
         if DOCX_AVAILABLE:
             try:
                 docx_path = self._create_docx_report(report_data)
-                print(f"✅ Word raporu oluşturuldu: {docx_path}")
+                print(f"[OK] Word raporu oluşturuldu: {docx_path}")
             except Exception as e:
-                print(f"❌ Word oluşturma hatası: {e}")
+                print(f"[HATA] Word oluşturma hatası: {e}")
         else:
-            print("⚠️ python-docx yüklü değil. Word raporu oluşturulamadı.")
+            print("[UYARI] python-docx yüklü değil. Word raporu oluşturulamadı.")
         
         print("="*60)
-        print("✅ RAPORLAMA TAMAMLANDI")
+        print("[OK] RAPORLAMA TAMAMLANDI")
         print("="*60)
         
         # Konsol özeti

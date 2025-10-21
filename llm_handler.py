@@ -531,19 +531,25 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
         """
        
         last_answers = [h["answer"] for h in self.history[-6:]]
-        summary = "\n".join(f"- {a}" for a in last_answers)
-        prompt = f"""
-You are a helpful interviewer AI. Given these candidate answers:
+        summary = "\n".join(f"- {a[:200]}" for a in last_answers)  # İlk 200 karakter
+        
+        prompt = f"""Adayın önceki cevaplarına göre kişiselleştirilmiş bir senaryo sorusu oluştur.
+
+Aday Cevapları:
 {summary}
 
-Create:
-1) A concise personalized scenario-based question that fits the candidate (1-2 sentences).
-2) A follow-up question that digs deeper into the candidate's decision.
+Görev:
+1. Adayın deneyimine uygun gerçekçi bir iş senaryosu yaz (2-3 cümle)
+2. Bu senaryoya derinlemesine bir takip sorusu ekle
 
-IMPORTANT: Return ONLY valid JSON in this exact format:
-{{"scenario": "Your scenario question here", "follow_up": "Your follow-up question here"}}
+Sadece JSON döndür:
+{{"scenario": "senaryo sorusu buraya", "follow_up": "takip sorusu buraya"}}
+
+Örnek:
+{{"scenario": "Projenizde kritik bir bug bulundu ve müşteri toplantısı 2 saat sonra. Ekip lideri tatilde. Ne yaparsınız?", "follow_up": "Ekip bu çözümü kabul etmezse nasıl ilerlersiniz?"}}
 """
-        model = genai.GenerativeModel("gemini-2.5-pro")
+        
+        model = genai.GenerativeModel("gemini-2.0-flash-exp")  # Daha hızlı model
         
         # Güvenlik ayarlarını gevşet
         safety_settings = [
@@ -568,30 +574,44 @@ IMPORTANT: Return ONLY valid JSON in this exact format:
         
         try:
             import json as _json
+            import re
+            
+            # Markdown kod bloklarını temizle
+            text_clean = re.sub(r'```json\s*', '', text)
+            text_clean = re.sub(r'```\s*', '', text_clean)
+            text_clean = text_clean.strip()
+            
             # Önce direkt JSON parse dene
             try:
-                return _json.loads(text.strip())
+                parsed = _json.loads(text_clean)
+                if isinstance(parsed, dict) and "scenario" in parsed and "follow_up" in parsed:
+                    print(f"[OK] Senaryo başarıyla üretildi")
+                    return parsed
             except:
-                # JSON bulmaya çalış
-                import re
-                m = re.search(r'\{[^{}]*"scenario"[^{}]*"follow_up"[^{}]*\}', text, re.DOTALL)
-                if m:
-                    return _json.loads(m.group(0))
-                else:
-                    # Son çare: metni böl
-                    lines = text.strip().split('\n')
-                    scenario = "Kişiselleştirilmiş senaryo sorusu"
-                    follow_up = "Bu durumda nasıl ilerlerdin?"
-                    
-                    for line in lines:
-                        if 'scenario' in line.lower():
-                            scenario = line.split(':', 1)[-1].strip().strip('"')
-                        elif 'follow' in line.lower():
-                            follow_up = line.split(':', 1)[-1].strip().strip('"')
-                    
-                    return {"scenario": scenario, "follow_up": follow_up}
+                pass
+            
+            # JSON regex ile bul
+            json_pattern = r'\{[^{}]*"scenario"[^{}]*"follow_up"[^{}]*\}'
+            m = re.search(json_pattern, text, re.DOTALL)
+            if m:
+                try:
+                    parsed = _json.loads(m.group(0))
+                    print(f"[OK] Senaryo regex ile bulundu")
+                    return parsed
+                except:
+                    pass
+            
+            # Son çare: satır satır parse
+            print("[UYARI] JSON parse başarısız, fallback kullanılıyor")
+            return {
+                "scenario": "Ekibinizle bir projede çalışıyorsunuz. Kritik bir karar almanız gerekiyor ama ekip üyeleri farklı görüşlerde. Nasıl ilerlersiniz?",
+                "follow_up": "Aldığınız kararı ekip kabul etmezse ne yaparsınız?"
+            }
         except Exception as e:
-            print(f"Scenario JSON parse hatası: {e}")
-            return {"scenario": "Kişiselleştirilmiş senaryo sorusu", "follow_up": "Bu durumda nasıl ilerlerdin?"}
+            print(f"[HATA] Senaryo üretimi başarısız: {e}")
+            return {
+                "scenario": "Ekibinizle bir projede çalışıyorsunuz. Kritik bir karar almanız gerekiyor ama ekip üyeleri farklı görüşlerde. Nasıl ilerlersiniz?",
+                "follow_up": "Aldığınız kararı ekip kabul etmezse ne yaparsınız?"
+            }
 
 
