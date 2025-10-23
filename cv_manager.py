@@ -194,50 +194,79 @@ JSON formatı:
         
         # Teknolojileri küçük harfe çevir ve normalize et
         tags = []
+        has_programming_lang = False
+        
         for tech in self.technologies:
             tech_lower = tech.lower()
             tags.append(tech_lower)
             
             # Yaygın eşleştirmeler
             if 'python' in tech_lower:
-                tags.extend(['python', 'backend', 'oop'])
+                tags.extend(['python', 'backend', 'oop', 'nesne-tabanlı-programlama'])
+                has_programming_lang = True
             elif 'java' in tech_lower and 'javascript' not in tech_lower:
-                tags.extend(['java', 'backend', 'oop'])
+                tags.extend(['java', 'backend', 'oop', 'nesne-tabanlı-programlama'])
+                has_programming_lang = True
             elif 'javascript' in tech_lower or 'js' in tech_lower:
                 tags.extend(['javascript', 'frontend'])
+                has_programming_lang = True
             elif 'react' in tech_lower:
-                tags.extend(['react', 'frontend', 'javascript'])
+                tags.extend(['react', 'react-vue-angular', 'frontend', 'javascript'])
             elif 'angular' in tech_lower:
-                tags.extend(['angular', 'frontend', 'javascript'])
+                tags.extend(['angular', 'react-vue-angular', 'frontend', 'javascript'])
             elif 'vue' in tech_lower:
-                tags.extend(['vue', 'frontend', 'javascript'])
+                tags.extend(['vue', 'react-vue-angular', 'frontend', 'javascript'])
             elif 'node' in tech_lower:
                 tags.extend(['nodejs', 'backend', 'javascript'])
+                has_programming_lang = True
             elif 'docker' in tech_lower:
-                tags.extend(['docker', 'devops', 'container'])
+                tags.extend(['docker', 'devops', 'ci-cd'])
             elif 'kubernetes' in tech_lower or 'k8s' in tech_lower:
-                tags.extend(['kubernetes', 'devops', 'container'])
+                tags.extend(['kubernetes', 'devops', 'ci-cd'])
             elif 'aws' in tech_lower:
                 tags.extend(['aws', 'cloud', 'devops'])
             elif 'azure' in tech_lower:
                 tags.extend(['azure', 'cloud', 'devops'])
             elif 'sql' in tech_lower or 'database' in tech_lower:
-                tags.extend(['sql', 'database', 'backend'])
+                tags.extend(['sql', 'veritabani', 'database', 'backend'])
             elif 'mongodb' in tech_lower or 'nosql' in tech_lower:
-                tags.extend(['mongodb', 'nosql', 'database'])
+                tags.extend(['mongodb', 'nosql', 'veritabani', 'database'])
             elif 'git' in tech_lower:
-                tags.extend(['git', 'version-control'])
+                tags.extend(['git', 'versiyon-kontrol', 'version-control'])
             elif 'ci/cd' in tech_lower or 'jenkins' in tech_lower:
                 tags.extend(['ci-cd', 'devops'])
             elif 'test' in tech_lower:
-                tags.extend(['testing', 'qa', 'unit-test'])
+                tags.extend(['test', 'testing', 'qa', 'unit-test'])
+            elif 'api' in tech_lower or 'rest' in tech_lower:
+                tags.extend(['api-design', 'backend'])
+            elif 'microservice' in tech_lower:
+                tags.extend(['microservices', 'yazılım-mimarisi'])
+            elif 'agile' in tech_lower or 'scrum' in tech_lower:
+                tags.extend(['agile-scrum', 'proje-yönetimi'])
+        
+        # Programlama dili varsa genel etiket ekle
+        if has_programming_lang:
+            tags.append('nodejs-python-java')  # Soru havuzundaki genel etiket
         
         # Deneyim alanlarını ekle
         for area in self.cv_analysis.get('experience_areas', []):
-            tags.append(area.lower())
+            area_lower = area.lower()
+            tags.append(area_lower)
+            
+            # Alan bazlı etiketler
+            if 'backend' in area_lower:
+                tags.extend(['backend', 'api-design', 'veritabani'])
+            elif 'frontend' in area_lower:
+                tags.extend(['frontend', 'ui-ux'])
+            elif 'devops' in area_lower:
+                tags.extend(['devops', 'ci-cd'])
+            elif 'full' in area_lower or 'fullstack' in area_lower:
+                tags.extend(['backend', 'frontend', 'api-design'])
         
         # Tekrarları kaldır
-        return list(set(tags))
+        unique_tags = list(set(tags))
+        print(f"[CV TAGS] Oluşturulan etiketler: {unique_tags[:10]}...")
+        return unique_tags
     
     def get_cv_summary(self) -> str:
         """CV özeti döndür (raporlama için)"""

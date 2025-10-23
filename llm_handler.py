@@ -70,19 +70,42 @@ class InterviewHandler:
 
 
     def find_questions_by_answer_tags(self, answer: str) -> List[Dict]:
-        
+        """
+        Cevaptaki anahtar kelimelere ve etiketlere göre ilgili soruları bulur.
+        Eşleşme skoruna göre sıralı döndürür.
+        """
         candidates = []
         text = (answer or "").lower()
+        
+        # Cevaptaki kelimeleri tokenize et
+        answer_tokens = set(text.split())
+        
         for q in self.questions:
-            # ignore very trivial matches by requiring whole-word or substring match
-            found = False
-            for kw in q.get("anahtar_kelimeler", []) + q.get("etiketler", []):
+            match_score = 0
+            
+            # Anahtar kelime eşleşmeleri (daha yüksek ağırlık)
+            for kw in q.get("anahtar_kelimeler", []):
                 if kw and kw.lower() in text:
-                    found = True
-                    break
-            if found:
-                candidates.append(q)
-        return candidates
+                    match_score += 3  # Anahtar kelime eşleşmesi
+                    
+            # Etiket eşleşmeleri
+            for tag in q.get("etiketler", []):
+                if tag and tag.lower() in text:
+                    match_score += 2  # Etiket eşleşmesi
+                # Etiket içindeki kelimeleri de kontrol et (örn: "nesne-tabanlı-programlama")
+                tag_words = tag.lower().replace("-", " ").split()
+                for tag_word in tag_words:
+                    if tag_word in answer_tokens:
+                        match_score += 1  # Kısmi etiket eşleşmesi
+            
+            if match_score > 0:
+                candidates.append((q, match_score))
+        
+        # Eşleşme skoruna göre sırala (en yüksek önce)
+        candidates.sort(key=lambda x: x[1], reverse=True)
+        
+        # Sadece soruları döndür (skorları değil)
+        return [q for q, score in candidates]
 
     def _collect_satisfied_tags(self) -> set:
         """Geçmiş cevaplardan çıkarılan etiket/anahtar kelime benzeri tatmin edilmiş konular.
@@ -117,16 +140,35 @@ class InterviewHandler:
         return out
     
     def _filter_by_cv_tags(self, candidates: List[Dict]) -> List[Dict]:
-        """CV etiketlerine göre soruları filtrele"""
+        """CV etiketlerine göre soruları filtrele - kısmi eşleşmeleri de kabul eder"""
         if not self.cv_tags:
             return candidates
         
         matched = []
+        cv_tags_lower = [cv_tag.lower() for cv_tag in self.cv_tags]
+        
         for q in candidates:
-            q_tags = q.get("tags", [])
-            # Soru etiketleri ile CV etiketleri kesişiyor mu?
-            if any(tag.lower() in [cv_tag.lower() for cv_tag in self.cv_tags] for tag in q_tags):
-                matched.append(q)
+            # Soru JSON'unda 'etiketler' anahtarı kullanılıyor
+            q_tags = q.get("etiketler", [])
+            
+            # Tam eşleşme veya kısmi eşleşme kontrolü
+            for q_tag in q_tags:
+                q_tag_lower = q_tag.lower()
+                
+                # 1. Tam eşleşme
+                if q_tag_lower in cv_tags_lower:
+                    matched.append(q)
+                    break
+                
+                # 2. CV etiketi soru etiketinin içinde (örn: "python" in "nodejs-python-java")
+                if any(cv_tag in q_tag_lower for cv_tag in cv_tags_lower):
+                    matched.append(q)
+                    break
+                
+                # 3. Soru etiketi CV etiketinin içinde (örn: "react" in "react-vue-angular")
+                if any(q_tag_lower in cv_tag for cv_tag in cv_tags_lower):
+                    matched.append(q)
+                    break
         
         return matched if matched else candidates  # Eşleşme yoksa tüm adayları döndür
 
@@ -315,10 +357,13 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
                               if q.get("kategori") == "teknik"
                               and q["id"] not in asked_ids]
                 if candidates:
+                    print(f"   [ETİKET EŞLEŞTİRME] {len(candidates)} bağlamlı soru bulundu")
+                    print(f"   Önceki cevap etiketleri: {last_technical.get('tags', [])}")
                     candidates = self._filter_by_prereqs(candidates)
                     target = self._target_difficulty_from_last("teknik2")
                     pick = self._choose_by_difficulty(candidates, target)
                     if pick:
+                        print(f"   [BAĞLAMLI SORU] Seçilen: {pick.get('id')} - Etiketler: {pick.get('etiketler', [])}")
                         return pick
 
                 # 3) Fallback_id tanımlıysa, o soruyu sor
@@ -399,10 +444,13 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
                               if q.get("kategori") == "teknik"
                               and q["id"] not in asked_ids]
                 if candidates:
+                    print(f"   [ETİKET EŞLEŞTİRME] {len(candidates)} bağlamlı soru bulundu")
+                    print(f"   Önceki cevap etiketleri: {last_technical.get('tags', [])}")
                     candidates = self._filter_by_prereqs(candidates)
                     target = self._target_difficulty_from_last("teknik4")
                     pick = self._choose_by_difficulty(candidates, target)
                     if pick:
+                        print(f"   [BAĞLAMLI SORU] Seçilen: {pick.get('id')} - Etiketler: {pick.get('etiketler', [])}")
                         return pick
 
                 # 3) fallback_id varsa kullan
@@ -435,36 +483,59 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
                 return pick
         
         elif self.current_phase == "senaryo":
-            # Senaryo sorusu (kişiselleştirilmiş)
-            scenario = self.generate_personal_scenario()
-            self.last_scenario = scenario or {}
-            return {
-                "id": "SCENARIO",
-                "kategori": "senaryo",
-                "soru": scenario.get("scenario", "Kişiselleştirilmiş senaryo sorusu"),
-                "difficulty_level": 3,
-                "etiketler": ["senaryo"],
-                "prereq_tags": [],
-                "follow_up_to": None,
-                "cevap_ornegi": "free_talk",
-                "anahtar_kelimeler": [],
-                "puanlama_kriteri": "mantik-tutarliligi",
-                "fallback_id": None
-            }
+            # 7. Soru: Senaryo havuzundan seç (tutarlı, test edilmiş)
+            asked_ids = {h["id"] for h in self.history}
+            scenario_candidates = [q for q in self.questions 
+                                  if q.get("kategori") == "senaryo" 
+                                  and q["id"] not in asked_ids]
+            
+            if scenario_candidates:
+                # Havuzdan rastgele seç
+                scenario_q = random.choice(scenario_candidates)
+                # Seçilen senaryoyu kaydet (8. soru için)
+                self.last_scenario_question = scenario_q
+                print(f"   [SENARYO] Havuzdan seçildi: {scenario_q['id']}", flush=True)
+                return scenario_q
+            else:
+                # Fallback: LLM ile üret
+                print(f"   [SENARYO] Havuzda soru kalmadı, LLM ile üretiliyor...", flush=True)
+                scenario = self.generate_personal_scenario()
+                self.last_scenario = scenario or {}
+                return {
+                    "id": "SCENARIO_LLM",
+                    "kategori": "senaryo",
+                    "soru": scenario.get("scenario", "Kişiselleştirilmiş senaryo sorusu"),
+                    "difficulty_level": 3,
+                    "etiketler": ["senaryo"],
+                    "prereq_tags": [],
+                    "follow_up_to": None,
+                    "cevap_ornegi": "free_talk",
+                    "anahtar_kelimeler": [],
+                    "puanlama_kriteri": "mantik-tutarliligi",
+                    "fallback_id": None
+                }
         
         elif self.current_phase == "takip":
-            # Senaryo takip sorusu
-            follow_text = None
-            if isinstance(getattr(self, "last_scenario", None), dict):
-                follow_text = self.last_scenario.get("follow_up")
+            # 8. Soru: LLM ile kişiselleştirilmiş takip sorusu üret
+            # 7. soruya + tüm önceki cevaplara bakarak
+            print(f"   [TAKİP] LLM ile kişiselleştirilmiş takip sorusu üretiliyor...", flush=True)
+            
+            # 7. sorunun metnini al
+            last_scenario_text = ""
+            if hasattr(self, 'last_scenario_question') and self.last_scenario_question:
+                last_scenario_text = self.last_scenario_question.get('soru', '')
+            
+            # Takip sorusunu üret
+            follow_up = self.generate_followup_question(last_scenario_text)
+            
             return {
                 "id": "SCENARIO_FOLLOW",
                 "kategori": "senaryo",
-                "soru": follow_text or "Aldığın kararı ekip kabul etmedi. Bu durumda nasıl ilerlerdin?",
+                "soru": follow_up,
                 "difficulty_level": 3,
                 "etiketler": ["senaryo", "takip"],
                 "prereq_tags": [],
-                "follow_up_to": "SCENARIO",
+                "follow_up_to": getattr(self, 'last_scenario_question', {}).get('id', 'SCENARIO'),
                 "cevap_ornegi": "free_talk",
                 "anahtar_kelimeler": [],
                 "puanlama_kriteri": "mantik-tutarliligi",
@@ -510,15 +581,31 @@ Respond with JSON: {{"score": 8, "feedback": "Good technical knowledge"}}"""
         return self.get_next_question_by_phase()
 
    
-    def record_turn(self, question: Dict, answer: str, analysis: Dict):
-        self.history.append({
+    def record_turn(self, question: Dict, answer: str, analysis: Dict, audio_score: Dict = None):
+        """
+        Mülakat turunu kaydet
+        
+        Args:
+            question: Soru bilgisi
+            answer: Kullanıcı cevabı
+            analysis: LLM analizi (score, feedback, vb.)
+            audio_score: Ses analizi skoru (overall_score, scores, confidence_level)
+        """
+        history_entry = {
             "id": question["id"],
             "kategori": question.get("kategori"),
             "soru": question.get("soru"),
             "answer": answer,
             "analysis": analysis,
-            "difficulty": question.get("difficulty_level")
-        })
+            "difficulty": question.get("difficulty_level"),
+            "tags": question.get("etiketler", [])  # Etiketleri kaydet (bağlamlı soru seçimi için)
+        }
+        
+        # Ses skorunu ekle (varsa)
+        if audio_score:
+            history_entry["audio_score"] = audio_score
+        
+        self.history.append(history_entry)
         
         # Fazı ilerlet
         self.advance_phase()
@@ -567,7 +654,6 @@ Sadece JSON döndür:
         
         try:
             text = resp.text
-            print(f"DEBUG: Gemini senaryo cevabı: {text}")
         except ValueError as e:
             print(f"Scenario response hatası: {e}")
             return {"scenario": "Kişiselleştirilmiş senaryo sorusu", "follow_up": "Bu durumda nasıl ilerlerdin?"}
@@ -613,5 +699,75 @@ Sadece JSON döndür:
                 "scenario": "Ekibinizle bir projede çalışıyorsunuz. Kritik bir karar almanız gerekiyor ama ekip üyeleri farklı görüşlerde. Nasıl ilerlersiniz?",
                 "follow_up": "Aldığınız kararı ekip kabul etmezse ne yaparsınız?"
             }
+
+    def generate_followup_question(self, scenario_text: str) -> str:
+        """
+        7. soruya (senaryo) ve tüm önceki cevaplara bakarak
+        LLM ile kişiselleştirilmiş bir takip sorusu üretir.
+        
+        Args:
+            scenario_text: 7. sorunun metni (senaryo sorusu)
+            
+        Returns:
+            str: Takip sorusu metni
+        """
+        # Tüm cevapları özetle
+        all_answers = [h["answer"] for h in self.history]
+        summary = "\n".join(f"{i+1}. {a[:150]}" for i, a in enumerate(all_answers))
+        
+        prompt = f"""Aşağıdaki senaryo sorusuna ve adayın önceki cevaplarına bakarak, derinlemesine bir takip sorusu oluştur.
+
+SENARYO SORUSU (7. Soru):
+{scenario_text}
+
+ADAYIN ÖNCEKİ CEVAPLARI (1-7. Sorular):
+{summary}
+
+GÖREV:
+1. Senaryo sorusuna bağlı kalarak bir takip sorusu yaz
+2. Adayın önceki cevaplarındaki deneyim/yaklaşımını dikkate al
+3. Soruyu daha zorlaştıran veya farklı bir açıdan düşündüren bir durum ekle
+4. Sadece soruyu döndür, açıklama ekleme
+
+ÖRNEK TAKIP SORULARI:
+- "Ekip bu çözümü kabul etmezse nasıl ilerlersiniz?"
+- "Müşteri bu durumdan memnun kalmazsa ne yaparsınız?"
+- "Bu kararın uzun vadeli sonuçları ne olabilir?"
+- "Benzer bir durumla tekrar karşılaşmamak için hangi süreçleri önerirsiniz?"
+
+Sadece takip sorusunu döndür (JSON değil, düz metin):
+"""
+        
+        try:
+            model = genai.GenerativeModel("gemini-2.0-flash-exp")
+            
+            safety_settings = [
+                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+            ]
+            
+            resp = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    max_output_tokens=150,
+                    temperature=0.7
+                ),
+                safety_settings=safety_settings
+            )
+            
+            follow_up = resp.text.strip()
+            
+            # Gereksiz karakterleri temizle
+            follow_up = follow_up.replace('"', '').replace("'", "").strip()
+            
+            print(f"[OK] Takip sorusu üretildi: {follow_up[:80]}...", flush=True)
+            return follow_up
+            
+        except Exception as e:
+            print(f"[HATA] Takip sorusu üretimi başarısız: {e}", flush=True)
+            # Fallback: Genel takip sorusu
+            return "Aldığınız kararı ekip kabul etmezse veya beklenmedik bir sorun çıkarsa nasıl ilerlersiniz?"
 
 

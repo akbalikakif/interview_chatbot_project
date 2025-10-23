@@ -1,3 +1,14 @@
+"""
+speech_to_text.py
+Google Cloud Speech-to-Text API kullanarak ses kaydını metne dönüştürür.
+
+Özellikler:
+- Çok dilli algılama (Türkçe + İngilizce)
+- Otomatik sessizlik algılama
+- Gelişmiş model (latest_long) kullanımı
+- Teknik terimlerin doğru algılanması
+"""
+
 import os
 import io
 import pyaudio
@@ -152,9 +163,11 @@ def record_and_convert(question_number=None):
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=RATE,
-        language_code="tr-TR",
+        language_code="tr-TR",  # Ana dil: Türkçe
+        alternative_language_codes=["en-US"],  # Alternatif dil: İngilizce (teknik terimler için)
         enable_automatic_punctuation=True,  # Otomatik noktalama
-        model="default",  # Daha iyi sonuçlar için
+        model="latest_long",  # Çok dilli ve uzun konuşmalar için optimize edilmiş model
+        use_enhanced=True,  # Gelişmiş model kullan (daha iyi doğruluk)
     )
 
     try:
@@ -167,13 +180,22 @@ def record_and_convert(question_number=None):
         # En yüksek güvenilirlik skoruna sahip transkripsiyonu al
         transcript = response.results[0].alternatives[0].transcript
         confidence = response.results[0].alternatives[0].confidence
+        
+        # Algılanan dili kontrol et (varsa)
+        detected_language = "tr-TR"  # Varsayılan
+        if hasattr(response.results[0], 'language_code'):
+            detected_language = response.results[0].language_code
+        
+        language_name = "Türkçe" if detected_language.startswith("tr") else "İngilizce"
 
-        print(f"\n Dönüştürülen metin: '{transcript}'")
-        print(f"Güvenilirlik skoru: {confidence:.2%}\n")
+        print(f"\n ✅ Dönüştürülen metin: '{transcript}'")
+        print(f"   Algılanan dil: {language_name} ({detected_language})")
+        print(f"   Güvenilirlik skoru: {confidence:.2%}\n")
 
         return {
             'transcript': transcript,
             'confidence': confidence,
+            'detected_language': detected_language,
             'audio_file': audio_filepath,  # Dosya yolu döndürülür
             'timestamp': timestamp
         }

@@ -30,6 +30,7 @@ def run_interview(cv_path: str = None):
                     cv_tags = cv_manager.get_matching_tags()
                     print(f"\n✅ CV analizi tamamlandı!")
                     print(f"   Toplam {len(cv_tags)} etiket çıkarıldı")
+                    print(f"   Etiketler: {', '.join(cv_tags[:15])}")
                     print(f"   Teknik sorular CV'nize göre özelleştirilecek\n")
         except Exception as e:
             print(f"⚠️ CV analizi hatası: {e}")
@@ -51,12 +52,12 @@ def run_interview(cv_path: str = None):
     print("Mülakat akışı:")
     print("1. Kişisel soru (bağımsız)")
     print("2. Kişisel soru (bağımsız)")
-    print("3. Teknik soru (bağımsız)")
+    print("3. Teknik soru (bağımsız, CV bazlı)")
     print("4. Teknik soru (3. soruya bağlı)")
     print("5. Teknik soru (bağımsız)")
     print("6. Teknik soru (5. soruya bağlı)")
-    print("7. Senaryo sorusu (kişiselleştirilmiş)")
-    print("8. Senaryo takip sorusu")
+    print("7. Senaryo sorusu ")
+    print("8. Takip sorusu (kişiselleştirilmiş)")
     print("\nMülakat başlıyor...\n")
 
     total_turns = 8
@@ -171,7 +172,8 @@ Ses Analizi Sonuçları:
         print("Puan:", analysis.get("score"))
 
         # Kaydet (bu otomatik olarak fazı ilerletir)
-        ih.record_turn(current_q, user_answer, analysis)
+        # Ses skorunu da ekle
+        ih.record_turn(current_q, user_answer, analysis, audio_score=overall_audio_score)
 
         # Mülakat tamamlandı mı kontrol et
         if ih.current_phase == "tamamlandı":
@@ -216,15 +218,34 @@ Ses Analizi Sonuçları:
 
 if __name__ == "__main__":
     import sys
+    import glob
     
-    # Komut satırından CV yolu alınabilir
-    # Kullanım: python main.py
-    # Kullanım: python main.py cv.pdf
-    # Kullanım: python main.py my_resume.docx
-    
+    # CV dosyasını bul
     cv_path = None
+    
+    # 1. Önce komut satırından parametre kontrol et
     if len(sys.argv) > 1:
         cv_path = sys.argv[1]
-        print(f"CV dosyası: {cv_path}")
+        print(f"✅ CV dosyası (parametre): {cv_path}", flush=True)
+    else:
+        # 2. Ana dizinde otomatik CV ara
+        # Desteklenen isimler: cv.*, resume.*, ozgecmis.*
+        cv_patterns = [
+            "cv.*", "CV.*", 
+            "resume.*", "Resume.*", "RESUME.*",
+            "ozgecmis.*", "ozgeçmiş.*", "Ozgecmis.*", "Ozgeçmiş.*"
+        ]
+        
+        for pattern in cv_patterns:
+            matches = glob.glob(pattern)
+            if matches:
+                # İlk eşleşeni al
+                cv_path = matches[0]
+                print(f"✅ CV dosyası (otomatik bulundu): {cv_path}", flush=True)
+                break
+        
+        if not cv_path:
+            print("ℹ️  CV dosyası bulunamadı. Mülakat CV olmadan başlayacak.", flush=True)
+            print("   CV eklemek için: Ana dizine 'cv.pdf', 'resume.docx' veya 'ozgecmis.txt' koyun", flush=True)
     
     run_interview(cv_path=cv_path)
