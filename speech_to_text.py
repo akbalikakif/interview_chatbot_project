@@ -31,8 +31,9 @@ RATE = 16000  # Google Cloud Speech-to-Text için önerilen sample rate
 
 # Sessizlik algılama parametreleri
 SILENCE_THRESHOLD = 500  # Sessizlik eşiği (amplitude değeri)
-SILENCE_DURATION = 5  # Sessizlik süresi (saniye)
+SILENCE_DURATION = int(3 * RATE / CHUNK)  # 3 saniye sessizlik (chunk sayısı)
 MIN_RECORDING_DURATION = 2  # Minimum kayıt süresi (saniye)
+INITIAL_GRACE_PERIOD = int(3 * RATE / CHUNK)  # Başlangıçta 3 saniye bekleme (konuşmaya hazırlanma)
 
 # Data klasörünü oluştur
 DATA_DIR = "data"
@@ -65,142 +66,178 @@ def save_audio_file(frames, filename):
 
 def record_and_convert(question_number=None):
     """
-    Mikrofondan ses kaydı yapar, sessizlik algıladığında durdurur,
-    hem dosyaya kaydeder hem de Google Cloud STT ile metne dönüştürür.
+    Mikrofondan ses kaydı yapar ve Google Cloud STT Streaming API ile
+    gerçek zamanlı olarak metne dönüştürür.
     
     Args:
         question_number: Soru numarası (1, 2, 3, ...). Belirtilirse data/soru-{n}.wav olarak kaydedilir.
+    
+    Returns:
+        Dict: {
+            'transcript': str,
+            'confidence': float,
+            'detected_language': str,
+            'audio_file': str,
+            'timestamp': str
+        }
     """
-    p = pyaudio.PyAudio()
-
-    # Mikrofon akışını başlat
-    stream = p.open(
-        format=FORMAT,
-        channels=CHANNELS,
-        rate=RATE,
-        input=True,
-        frames_per_buffer=CHUNK
+    print("\n🎤 Konuşmaya başlayın... (Sessizlik algılandığında kayıt otomatik durur)")
+    
+    # Google Cloud STT streaming client
+    client = speech.SpeechClient()
+    
+    config = speech.StreamingRecognitionConfig(
+        config=speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=RATE,
+            language_code="tr-TR",
+            alternative_language_codes=["en-US"],
+            enable_automatic_punctuation=True,
+            model="latest_long",
+            use_enhanced=True,
+        ),
+        interim_results=True,  # Ara sonuçları göster (gerçek zamanlı)
     )
-
-    print("\n Konuşmaya başlayın...")
-    print("Sessizlik algılandığında kayıt otomatik durur.\n")
-
-    frames = []
-    silent_chunks = 0
-    max_silent_chunks = int(SILENCE_DURATION * RATE / CHUNK)
-    recording_started = False
-    start_time = time.time()
-
-    try:
-        while True:
-            data = stream.read(CHUNK, exception_on_overflow=False)
-            frames.append(data)
-            current_duration = time.time() - start_time
-
-            # Sessizlik kontrolü
-            if is_silent(data):
-                silent_chunks += 1
-
-                # Minimum süre geçtiyse ve yeterli sessizlik varsa dur
-                if current_duration >= MIN_RECORDING_DURATION and silent_chunks >= max_silent_chunks:
-                    print(f"\n Sessizlik algılandı. Kayıt tamamlandı. ({current_duration:.1f} saniye)")
-                    break
-            else:
-                # Ses tespit edildi
-                if not recording_started:
-                    recording_started = True
-                    print("Kayıt başladı...")
-
-                silent_chunks = 0  # Sessizlik sayacını sıfırla
-
-            # Maksimum kayıt süresini aşma (güvenlik için 2 dakika)
-            if current_duration > 120:
-                print("\n Maksimum kayıt süresine ulaşıldı.")
-                break
-
-    except KeyboardInterrupt:
-        print("\n Kayıt kullanıcı tarafından durduruldu.")
-
-    finally:
-        # Akışı kapat
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-
-    # Eğer çok kısa kayıt varsa uyar
-    if len(frames) < int(MIN_RECORDING_DURATION * RATE / CHUNK):
-        print("Çok kısa bir kayıt yapıldı. Lütfen tekrar deneyin.")
-        return None
-
-    # Ses dosyasını data/ klasörüne kaydet
+    
+    # Paylaşılan değişkenler
+    frames_for_file = []
+    audio_filepath = None
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    if question_number is not None:
-        # Soru numarasına göre kaydet (soru-1.wav, soru-2.wav, ...)
-        audio_filepath = os.path.join(DATA_DIR, f"soru-{question_number}.wav")
-    else:
-        # Geçici dosya olarak kaydet
-        audio_filepath = os.path.join(DATA_DIR, f"temp_recording_{timestamp}.wav")
-
-    # Ses dosyasını kaydet
-    with wave.open(audio_filepath, 'wb') as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
-        wf.setframerate(RATE)
-        wf.writeframes(b''.join(frames))
-    
-    print(f"Ses kaydedildi: {audio_filepath}")
-
-    # Ses verisini byte array'e dönüştür
-    audio_data = b''.join(frames)
-
-    # Google Cloud STT istemcisini oluştur
-    print("\nSes metne dönüştürülüyor...")
-    client = speech.SpeechClient()
-
-    # Ses dosyasını API'ye gönder
-    audio = speech.RecognitionAudio(content=audio_data)
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=RATE,
-        language_code="tr-TR",  # Ana dil: Türkçe
-        alternative_language_codes=["en-US"],  # Alternatif dil: İngilizce (teknik terimler için)
-        enable_automatic_punctuation=True,  # Otomatik noktalama
-        model="latest_long",  # Çok dilli ve uzun konuşmalar için optimize edilmiş model
-        use_enhanced=True,  # Gelişmiş model kullan (daha iyi doğruluk)
-    )
-
-    try:
-        response = client.recognize(config=config, audio=audio)
-
-        if not response.results:
-            print(" Ses algılandı ancak metin dönüştürülemedi. Lütfen daha net konuşun.")
-            return None
-
-        # En yüksek güvenilirlik skoruna sahip transkripsiyonu al
-        transcript = response.results[0].alternatives[0].transcript
-        confidence = response.results[0].alternatives[0].confidence
+    # Ses akışı için generator
+    def audio_generator():
+        """Mikrofon akışından ses verisi üretir ve API'ye gönderir"""
+        nonlocal frames_for_file, audio_filepath
         
-        # Algılanan dili kontrol et (varsa)
-        detected_language = "tr-TR"  # Varsayılan
-        if hasattr(response.results[0], 'language_code'):
-            detected_language = response.results[0].language_code
+        p = pyaudio.PyAudio()
+        stream = p.open(
+            format=pyaudio.paInt16,
+            channels=1,
+            rate=RATE,
+            input=True,
+            frames_per_buffer=CHUNK
+        )
+        
+        silent_chunks = 0
+        recording_started = False
+        grace_period_chunks = 0  # Başlangıç toleransı için sayaç
+        
+        try:
+            while True:
+                data = stream.read(CHUNK, exception_on_overflow=False)
+                frames_for_file.append(data)
+                grace_period_chunks += 1
+                
+                # Ses seviyesini kontrol et
+                audio_data = np.frombuffer(data, dtype=np.int16)
+                volume = np.abs(audio_data).mean()
+                
+                # Başlangıç tolerans süresi (ilk 3 saniye)
+                if grace_period_chunks <= INITIAL_GRACE_PERIOD:
+                    # İlk 3 saniyede ses algılanırsa kayda başla
+                    if volume > SILENCE_THRESHOLD and not recording_started:
+                        recording_started = True
+                        print("🔴 Kayıt başladı...", flush=True)
+                    # İlk 3 saniyede sessizlik sayılmaz
+                    continue
+                
+                # Normal kayıt modu (3 saniye sonra)
+                if volume > SILENCE_THRESHOLD:
+                    silent_chunks = 0
+                    if not recording_started:
+                        recording_started = True
+                        print("🔴 Kayıt başladı...", flush=True)
+                else:
+                    if recording_started:
+                        silent_chunks += 1
+                
+                # Sessizlik süresi aşıldıysa dur (3 saniye sessizlik)
+                if recording_started and silent_chunks > SILENCE_DURATION:
+                    print("✅ Kayıt tamamlandı. ({:.1f} saniye)".format(len(frames_for_file) * CHUNK / RATE), flush=True)
+                    break
+                
+                # Maksimum süre kontrolü
+                if len(frames_for_file) > (RATE / CHUNK * 60):
+                    print("⏱️ Maksimum süre aşıldı.")
+                    break
+                
+                # API'ye gerçek zamanlı gönder
+                yield speech.StreamingRecognizeRequest(audio_content=data)
+        
+        finally:
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+            
+            # Ses dosyasını kaydet
+            if question_number is not None:
+                audio_filepath = os.path.join(DATA_DIR, f"soru-{question_number}.wav")
+            else:
+                audio_filepath = os.path.join(DATA_DIR, f"temp_recording_{timestamp}.wav")
+            
+            p_temp = pyaudio.PyAudio()
+            with wave.open(audio_filepath, 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(p_temp.get_sample_size(pyaudio.paInt16))
+                wf.setframerate(RATE)
+                wf.writeframes(b''.join(frames_for_file))
+            p_temp.terminate()
+            
+            print(f"💾 Ses kaydedildi: {audio_filepath}")
+    
+    # Streaming recognition başlat
+    print("🔄 Gerçek zamanlı transkripsiyon aktif...")
+    
+    try:
+        requests = audio_generator()
+        responses = client.streaming_recognize(config, requests)
+        
+        # Sonuçları topla
+        transcript = ""
+        confidence = 0.0
+        detected_language = "tr-TR"
+        
+        for response in responses:
+            if not response.results:
+                continue
+            
+            result = response.results[0]
+            
+            # Final sonucu al
+            if result.is_final:
+                transcript = result.alternatives[0].transcript
+                confidence = result.alternatives[0].confidence
+                
+                # Dil tespiti
+                if hasattr(result, 'language_code'):
+                    detected_language = result.language_code
+                
+                print(f"📝 {transcript}", flush=True)
+            else:
+                # Ara sonuçları göster (opsiyonel)
+                interim_transcript = result.alternatives[0].transcript
+                print(f"⏳ {interim_transcript}", end='\r', flush=True)
+        
+        if not transcript:
+            print("\n⚠️ Ses algılandı ancak metin dönüştürülemedi. Lütfen daha net konuşun.")
+            return None
         
         language_name = "Türkçe" if detected_language.startswith("tr") else "İngilizce"
-
-        print(f"\n ✅ Dönüştürülen metin: '{transcript}'")
-        print(f"   Algılanan dil: {language_name} ({detected_language})")
-        print(f"   Güvenilirlik skoru: {confidence:.2%}\n")
-
+        
+        print(f"\n✅ Transkripsiyon tamamlandı!")
+        print(f"   Metin: '{transcript}'")
+        print(f"   Dil: {language_name} ({detected_language})")
+        print(f"   Güvenilirlik: {confidence:.2%}\n")
+        
         return {
             'transcript': transcript,
             'confidence': confidence,
             'detected_language': detected_language,
-            'audio_file': audio_filepath,  # Dosya yolu döndürülür
+            'audio_file': audio_filepath,
             'timestamp': timestamp
         }
-
+    
     except Exception as e:
-        print(f" Hata oluştu: {e}")
+        print(f"\n❌ Hata oluştu: {e}")
         return None
 
