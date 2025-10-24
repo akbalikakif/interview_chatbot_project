@@ -13,7 +13,7 @@ try:
     from reportlab.lib.pagesizes import letter, A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image
     from reportlab.lib import colors
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
@@ -39,8 +39,8 @@ class ReportGenerator:
         if not os.path.exists(self.reports_dir):
             os.makedirs(self.reports_dir)
     
-    def generate_interview_report(self, interview_history: List[Dict], candidate_name: str = "Aday") -> str:
-        """Mülakat geçmişinden detaylı rapor oluşturur"""
+    def generate_interview_report(self, interview_history: List[Dict], candidate_name: str = "Aday", chart_paths: Dict[str, str] = None) -> str:
+        """Mülakat geçmişinden detaylı rapor oluşturur (grafiklerle)"""
         
         report_data = {
             "candidate_name": candidate_name,
@@ -56,11 +56,11 @@ class ReportGenerator:
         print("RAPOR OLUŞTURULUYOR...")
         print("="*60)
         
-        # PDF raporu oluştur
+        # PDF raporu oluştur (grafiklerle)
         pdf_path = None
         if PDF_AVAILABLE:
             try:
-                pdf_path = self._create_pdf_report(report_data)
+                pdf_path = self._create_pdf_report(report_data, chart_paths)
                 print(f"[OK] PDF raporu oluşturuldu: {pdf_path}")
             except Exception as e:
                 print(f"[HATA] PDF oluşturma hatası: {e}")
@@ -273,8 +273,8 @@ FAZ BAZINDA PERFORMANS:
         
         return summary
     
-    def _create_pdf_report(self, report_data: Dict) -> str:
-        """PDF formatında rapor oluşturur - Türkçe karakter desteği ile"""
+    def _create_pdf_report(self, report_data: Dict, chart_paths: Dict[str, str] = None) -> str:
+        """PDF formatında rapor oluşturur - Türkçe karakter desteği ve grafiklerle"""
         if not PDF_AVAILABLE:
             return None
         
@@ -426,7 +426,42 @@ FAZ BAZINDA PERFORMANS:
         story.append(phase_table)
         story.append(Spacer(1, 0.3*inch))
         
+        # Grafikler ekle (varsa)
+        if chart_paths:
+            story.append(PageBreak())
+            story.append(Paragraph("GELİŞİM GRAFİKLERİ", heading_style))
+            story.append(Spacer(1, 0.2*inch))
+            
+            # Genel gelişim grafiği
+            if chart_paths.get('overall_progress') and os.path.exists(chart_paths['overall_progress']):
+                story.append(Paragraph("Genel Gelişim", normal_style))
+                img = Image(chart_paths['overall_progress'], width=6*inch, height=3*inch)
+                story.append(img)
+                story.append(Spacer(1, 0.3*inch))
+            
+            # Faz karşılaştırma
+            if chart_paths.get('phase_comparison') and os.path.exists(chart_paths['phase_comparison']):
+                story.append(Paragraph("Faz Bazında Performans", normal_style))
+                img = Image(chart_paths['phase_comparison'], width=5*inch, height=3*inch)
+                story.append(img)
+                story.append(Spacer(1, 0.3*inch))
+            
+            # Radar chart
+            if chart_paths.get('radar') and os.path.exists(chart_paths['radar']):
+                story.append(Paragraph("Yetenek Haritası", normal_style))
+                img = Image(chart_paths['radar'], width=4*inch, height=4*inch)
+                story.append(img)
+                story.append(Spacer(1, 0.3*inch))
+            
+            # İyileşme trendi
+            if chart_paths.get('improvement_trend') and os.path.exists(chart_paths['improvement_trend']):
+                story.append(Paragraph("Kümülatif Gelişim", normal_style))
+                img = Image(chart_paths['improvement_trend'], width=6*inch, height=3*inch)
+                story.append(img)
+                story.append(Spacer(1, 0.3*inch))
+        
         # Öneriler
+        story.append(PageBreak())
         story.append(Paragraph("ÖNERİLER", heading_style))
         for i, rec in enumerate(report_data['recommendations'], 1):
             story.append(Paragraph(f"{i}. {rec}", normal_style))

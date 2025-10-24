@@ -1,23 +1,28 @@
 # main.py
 from llm_handler import InterviewHandler
-from text_to_speech import text_to_speech_playback
 from speech_to_text import record_and_convert
+from text_to_speech import text_to_speech_playback
 from analysis_handler import AnalysisHandler
 from reports import generate_final_report
 from cv_manager import CVManager
-import random
+from user_profile import UserProfile, get_or_create_user
+from progress_charts import ProgressCharts
 import os
-import shutil
 import warnings
 warnings.filterwarnings("ignore")
 
-def run_interview(cv_path: str = None):
+def run_interview(cv_path: str = None, user_profile: UserProfile = None):
     """
     Mülakat sistemini başlatır
     
     Args:
         cv_path: CV dosyasının yolu (opsiyonel). PDF, DOCX veya TXT formatında olabilir.
+        user_profile: Kullanıcı profili (opsiyonel)
     """
+    # Kullanıcı profili yoksa oluştur
+    if user_profile is None:
+        user_profile = get_or_create_user()
+    
     # CV varsa analiz et
     cv_tags = []
     if cv_path:
@@ -182,15 +187,66 @@ Ses Analizi Sonuçları:
     print("\n=== Mülakat Tamamlandı ===")
     print("Teşekkürler! Değerlendirme raporu hazırlanıyor...")
     
-    # Detaylı rapor oluştur
+    # Mülakat verilerini hazırla
+    from reports import ReportGenerator
+    
+    # Skorları hesapla
+    overall_score = sum(h.get('analysis', {}).get('score', 0) for h in ih.history) / len(ih.history) if ih.history else 0
+    content_score = overall_score  # LLM skoru
+    audio_score = sum(h.get('audio_score', {}).get('overall_score', 0) for h in ih.history if h.get('audio_score')) / len([h for h in ih.history if h.get('audio_score')]) if any(h.get('audio_score') for h in ih.history) else 0
+    audio_score = audio_score / 10  # 0-10 skalasına çevir
+    
+    # Faz skorları
+    phase_scores = {}
+    for phase in ['kişisel', 'teknik', 'senaryo']:
+        phase_questions = [h for h in ih.history if h.get('kategori') == phase]
+        if phase_questions:
+            phase_scores[phase] = sum(h.get('analysis', {}).get('score', 0) for h in phase_questions) / len(phase_questions)
+    
+    # Kullanıcı profiline kaydet
+    interview_data = {
+        'overall_score': overall_score,
+        'content_score': content_score,
+        'audio_score': audio_score,
+        'phase_scores': phase_scores,
+        'question_count': len(ih.history),
+        'answers': [{'question': h.get('soru'), 'answer': h.get('answer'), 'score': h.get('analysis', {}).get('score', 0)} for h in ih.history]
+    }
+    
+    user_profile.add_interview_result(interview_data)
+    
+    # İstatistikleri göster
+    stats = user_profile.get_statistics()
+    print(f"\n📊 Mülakat İstatistikleri:")
+    print(f"   Toplam Mülakat: {stats['total_interviews']}")
+    print(f"   Bu Mülakat Skoru: {stats['latest_score']:.1f}/10")
+    print(f"   Ortalama Skor: {stats['average_score']:.1f}/10")
+    print(f"   En İyi Skor: {stats['best_score']:.1f}/10")
+    if stats['improvement_rate'] != 0:
+        trend = "📈" if stats['improvement_rate'] > 0 else "📉"
+        print(f"   Gelişim: {trend} {abs(stats['improvement_rate']):.1f}%")
+    
+    # Grafikler oluştur
+    print("\n📊 Gelişim grafikleri oluşturuluyor...")
+    chart_generator = ProgressCharts(user_profile.username)
+    chart_paths = chart_generator.generate_all_charts(user_profile.get_interview_history())
+    
+    # Detaylı rapor oluştur (grafiklerle)
     try:
-        report = generate_final_report(ih)
+        report_gen = ReportGenerator()
+        report = report_gen.generate_interview_report(
+            ih.history, 
+            candidate_name=user_profile.username,
+            chart_paths=chart_paths
+        )
         print("\n" + "="*50)
         print("DETAYLI RAPOR")
         print("="*50)
         print(report)
     except Exception as e:
         print(f"Rapor oluşturma hatası: {e}")
+        import traceback
+        traceback.print_exc()
     
     # Özet rapor
     print("\n--- Mülakat Özeti ---")
