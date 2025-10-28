@@ -33,7 +33,7 @@ RATE = 16000  # Google Cloud Speech-to-Text için önerilen sample rate
 SILENCE_THRESHOLD = 500  # Sessizlik eşiği (amplitude değeri)
 SILENCE_DURATION = int(3 * RATE / CHUNK)  # 3 saniye sessizlik (chunk sayısı)
 MIN_RECORDING_DURATION = 2  # Minimum kayıt süresi (saniye)
-INITIAL_GRACE_PERIOD = int(3 * RATE / CHUNK)  # Başlangıçta 3 saniye bekleme (konuşmaya hazırlanma)
+INITIAL_GRACE_PERIOD = int(3 * RATE / CHUNK)  # Başlangıçta 3 saniye sessizlik toleransı (düşünme süresi)
 
 # Data klasörünü oluştur
 DATA_DIR = "data"
@@ -81,7 +81,7 @@ def record_and_convert(question_number=None):
             'timestamp': str
         }
     """
-    print("\n🎤 Konuşmaya başlayın... (Sessizlik algılandığında kayıt otomatik durur)")
+    print("\n Kayıt başladı! Konuşabilirsiniz... (3 saniye sessizlik algılandığında kayıt otomatik durur)")
     
     # Google Cloud STT streaming client
     client = speech.SpeechClient()
@@ -119,8 +119,9 @@ def record_and_convert(question_number=None):
         )
         
         silent_chunks = 0
-        recording_started = False
+        recording_started = True  # Kayıt hemen başlar
         grace_period_chunks = 0  # Başlangıç toleransı için sayaç
+        print("🔴 Kayıt aktif - düşünmek için 3 saniye sessiz kalabilirsiniz...", flush=True)
         
         try:
             while True:
@@ -132,24 +133,18 @@ def record_and_convert(question_number=None):
                 audio_data = np.frombuffer(data, dtype=np.int16)
                 volume = np.abs(audio_data).mean()
                 
-                # Başlangıç tolerans süresi (ilk 3 saniye)
+                # Başlangıç tolerans süresi (ilk 3 saniye) - sessizlik sayılmaz
                 if grace_period_chunks <= INITIAL_GRACE_PERIOD:
-                    # İlk 3 saniyede ses algılanırsa kayda başla
-                    if volume > SILENCE_THRESHOLD and not recording_started:
-                        recording_started = True
-                        print("🔴 Kayıt başladı...", flush=True)
-                    # İlk 3 saniyede sessizlik sayılmaz
+                    # İlk 3 saniyede sessizlik sayılmaz (düşünme süresi)
+                    if volume > SILENCE_THRESHOLD:
+                        silent_chunks = 0  # Ses varsa sessizlik sayacını sıfırla
                     continue
                 
-                # Normal kayıt modu (3 saniye sonra)
+                # Normal kayıt modu (3 saniye sonra) - artık sessizlik sayılır
                 if volume > SILENCE_THRESHOLD:
-                    silent_chunks = 0
-                    if not recording_started:
-                        recording_started = True
-                        print("🔴 Kayıt başladı...", flush=True)
+                    silent_chunks = 0  # Ses varsa sessizlik sayacını sıfırla
                 else:
-                    if recording_started:
-                        silent_chunks += 1
+                    silent_chunks += 1  # Sessizlik sayacını artır
                 
                 # Sessizlik süresi aşıldıysa dur (3 saniye sessizlik)
                 if recording_started and silent_chunks > SILENCE_DURATION:
@@ -192,8 +187,8 @@ def record_and_convert(question_number=None):
         requests = audio_generator()
         responses = client.streaming_recognize(config, requests)
         
-        # Sonuçları topla
-        transcript = ""
+        # Sonuçları topla - TÜM final transkriptleri biriktir
+        all_transcripts = []  # Tüm final transkriptleri sakla
         confidence = 0.0
         detected_language = "tr-TR"
         
@@ -203,20 +198,24 @@ def record_and_convert(question_number=None):
             
             result = response.results[0]
             
-            # Final sonucu al
+            # Final sonucu al ve listeye ekle
             if result.is_final:
-                transcript = result.alternatives[0].transcript
+                final_text = result.alternatives[0].transcript
+                all_transcripts.append(final_text)  # Her final sonucu ekle
                 confidence = result.alternatives[0].confidence
                 
                 # Dil tespiti
                 if hasattr(result, 'language_code'):
                     detected_language = result.language_code
                 
-                print(f"📝 {transcript}", flush=True)
+                print(f"📝 {final_text}", flush=True)
             else:
                 # Ara sonuçları göster (opsiyonel)
                 interim_transcript = result.alternatives[0].transcript
                 print(f"⏳ {interim_transcript}", end='\r', flush=True)
+        
+        # Tüm transkriptleri birleştir
+        transcript = " ".join(all_transcripts).strip()
         
         if not transcript:
             print("\n⚠️ Ses algılandı ancak metin dönüştürülemedi. Lütfen daha net konuşun.")
